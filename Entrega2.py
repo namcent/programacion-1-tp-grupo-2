@@ -389,34 +389,36 @@ def finalizarPrestamo(_alumnos, _libros, _prestamos):
     return _prestamos, _alumnos
 
 
-def resumenMensual(_prestamos, _anio, _mes):
+def resumenMensual(_prestamos, _alumnos, _libros, _anio, _mes):
     """
     Genera un resumen de los préstamos realizados en un mes específico.
 
     Parámetros:
         _prestamos (dict): Diccionario de préstamos (clave: idPrestamo, valor: datos del préstamo).
+        _alumnos (dict): Diccionario de alumnos (clave: idAlumno, valor: datos del alumno).
+        _libros (dict): Diccionario de libros  (clave: idLibro,  valor: datos del libro).
         _anio (int): Año del cual se desea obtener el resumen.
         _mes (int): Mes (1 a 12) del cual se desea obtener el resumen.
 
     Retorno:
-        cantidadTotal (int): Cantidad total de préstamos del mes.
-        devueltosCorrectos (int): Cantidad de préstamos devueltos correctamente.
-        devueltosIncorrectos (int): Cantidad de préstamos con devolución incorrecta.
+        str: texto formateado con el resumen mensual de préstamos realizados en un mes.
     """
-    cantidadTotal = 0
-    devueltosCorrectos = 0
-    devueltosIncorrectos = 0
+    salida = []
+    salida.append(f"Listado de reservas del mes {_mes}/{_anio}")
+    salida.append(f"{'Fecha/Hora':<35}{'Alumno':<35}{'Libro':<35}")
+    salida.append("-" * 105)
 
-    for prestamo in _prestamos.values():
+    for clave, prestamo in _prestamos.items():
         fecha = prestamo["fechaInicio"]
         if fecha.startswith(f"{_anio}-{str(_mes).zfill(2)}"):
-            cantidadTotal += 1
-            if prestamo["estadoDevolucionCorrecto"]:
-                devueltosCorrectos += 1
-            else:
-                devueltosIncorrectos += 1
+            fechaHora = clave
+            idAlumno = prestamo["idAlumno"]
+            nombreAlumno = _alumnos.get(idAlumno, {}).get("nombre", f"Alumno {idAlumno}")
+            idLibro = prestamo["idLibro"]
+            tituloLibro = _libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}")
+            salida.append(f"{fechaHora:<35}{nombreAlumno:<35}{tituloLibro:<35}")
 
-    return cantidadTotal, devueltosCorrectos, devueltosIncorrectos
+    return "\n".join(salida)
 
 
 def resumenAnualPorLibroCantidad(_prestamos, _anio, _libros):
@@ -429,8 +431,7 @@ def resumenAnualPorLibroCantidad(_prestamos, _anio, _libros):
         _libros (dict): Diccionario de préstamos (clave: idLibro, valor: datos del libro).
 
     Retorno:
-        resumen (dict): Diccionario donde las claves son ID de libros y los valores son la
-        cantidad de veces prestados.
+        str: texto formateado con las reservas mensuales de libros.
     """
     resumen = {idLibro: [0] * 12 for idLibro in _libros.keys()}
 
@@ -441,11 +442,17 @@ def resumenAnualPorLibroCantidad(_prestamos, _anio, _libros):
             libro = prestamo["idLibro"]
             if libro in resumen:
                 resumen[libro][mes - 1] += 1
-            else:
-                resumen[libro] = [0] * 12
-                resumen[libro][mes - 1] = 1
 
-    return resumen
+    resumenPorTitulo = {
+        _libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}"): valores
+        for idLibro, valores in resumen.items()
+    }
+
+    return formateoInformes(
+        resumenPorTitulo,
+        _anio,
+        "Resumen Anual de Reservas por Libro (Cantidades)"
+    )
 
 
 def resumenAnualPorLibroPesos(_prestamos, _libros, _anio):
@@ -458,15 +465,14 @@ def resumenAnualPorLibroPesos(_prestamos, _libros, _anio):
         _anio (int): Año para el cual se desea generar el resumen.
 
     Retorno:
-        resumen (dict): Diccionario donde las claves son ID de libros y los valores son el total acumulado
-        en pesos por garantía.
+        str: texto formateado con el monto acumulado mensualmente por libro.
     """
     resumen = {}
 
     for prestamo in _prestamos.values():
         fecha = prestamo["fechaInicio"]
         if fecha.startswith(str(_anio)):
-            mes = int(fecha[5:7]) - 1  # índice de mes (0 a 11)
+            mes = int(fecha[5:7]) - 1
             idLibro = prestamo["idLibro"]
             nombreLibro = _libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}")
             costo = _libros.get(idLibro, {}).get("costoGarantia", 0)
@@ -475,7 +481,104 @@ def resumenAnualPorLibroPesos(_prestamos, _libros, _anio):
                 resumen[nombreLibro] = [0] * 12
             resumen[nombreLibro][mes] += costo
 
-    return resumen
+    return formateoInformes(
+        resumen,
+        _anio,
+        "Resumen Anual de Reservas por Libro (Pesos)",
+        _esDinero=True
+    )
+
+def resumenAnualDevolucionesIncorrectas(_prestamos, _anio):
+    """
+    Genera el resumen anual de devoluciones incorrectas por mes.
+
+    Parámetros:
+        prestamos (dict): diccionario de préstamos.
+        anio (int): año a filtrar.
+
+    Retorno:
+        str: texto formateado con devoluciones incorrectas por mes.
+    """
+    meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+             "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+
+    incorrectasPorMes = []
+    for mes in range(1, 13):
+        count = 0
+        for prestamo in _prestamos.values():
+            fecha = prestamo["fechaInicio"]
+            if fecha.startswith(f"{_anio}-{str(mes).zfill(2)}"):
+                if not prestamo.get("estadoDevolucionCorrecto", True):
+                    count += 1
+        incorrectasPorMes.append(count)
+
+    anchoTotal = 160
+    salida = []
+    salida.append("-" * anchoTotal)
+    salida.append("Resumen anual de reservas con devolución incorrecta".center(anchoTotal))
+    salida.append("-" * anchoTotal)
+
+    encabezado = "MESES".ljust(15)
+    for m in meses:
+        encabezado += f"{m}.{str(_anio)[-2:]}".center(12)
+    salida.append(encabezado)
+
+    salida.append("-" * anchoTotal)
+
+    fila = "Devol.Incorrect".ljust(15)
+    for val in incorrectasPorMes:
+        fila += f"{val}".center(12)
+    salida.append(fila)
+
+    salida.append("-" * anchoTotal)
+
+    return "\n".join(salida)
+
+
+def formateoInformes(_diccionario, _anio, _titulo, _esDinero=False):
+    """
+    Formatea un informe anual en forma de tabla con columnas mensuales.
+
+    Parámetros:
+        _diccionario (dict): Diccionario donde las claves son los nombres y los valores son listas con 12 números (uno por mes).
+        _anio (int o str): Año del informe.
+        _titulo (str): Título centrado que aparecerá en la parte superior del informe.
+        _esDinero (bool): Si es True, los valores se muestran con signo '$' y dos decimales.
+
+    Retorno:
+        str: Cadena formateada con encabezados, filas alineadas y totales por mes.
+    """
+
+    _anio = int(_anio)
+    anchoNombre = 50
+    anchoMes = 10
+    totalColumnas = anchoNombre + (12 * anchoMes)
+
+    meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+             "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+
+    salida = []
+    salida.append("-" * totalColumnas)
+    salida.append(_titulo.center(totalColumnas))
+    salida.append("-" * totalColumnas)
+
+    encabezado = f"{'Libros':<{anchoNombre}}"
+    for mes in meses:
+        encabezado += f"{mes}.{_anio % 100:02d}".rjust(anchoMes)
+    salida.append(encabezado)
+    salida.append("-" * totalColumnas)
+
+    for libro, valores in _diccionario.items():
+        fila = f"{libro:<{anchoNombre}}"
+        for val in valores:
+            if val == 0:
+                fila += f"{'':>{anchoMes}}"
+            else:
+                fila += f"{'$' + format(val, '.2f'):>{anchoMes}}" if _esDinero else f"{val:>{anchoMes}}"
+        salida.append(fila)
+
+    salida.append("-" * totalColumnas)
+    return "\n".join(salida)
 
 
 # ----------------------------------------------------------------------------------------------
@@ -952,170 +1055,19 @@ def main():
                 elif opcionSubmenu == "1":  # Opción 1 del submenú
                     anio = int(input("Ingrese el año (formato AAAA): "))
                     mes = int(input("Ingrese el mes (1-12): "))
-
-                    print("\nListado de reservas del mes")
-                    print(f"{'Fecha/Hora':<35}{'Alumno':<35}{'Libro':<35}")
-                    print("-" * 80)
-
-                    for clave, prestamo in prestamos.items():
-                        fecha = prestamo["fechaInicio"]
-                        if fecha.startswith(f"{anio}-{str(mes).zfill(2)}"):
-                            fechaHora = clave
-                            idAlumno = prestamo["idAlumno"]
-                            nombreAlumno = alumnos.get(idAlumno, {}).get(
-                                "nombre", f"Alumno {idAlumno}"
-                            )
-                            idLibro = prestamo["idLibro"]
-                            tituloLibro = libros.get(idLibro, {}).get(
-                                "titulo", f"Libro {idLibro}"
-                            )
-
-                            print(f"{fechaHora:<35}{nombreAlumno:<35}{tituloLibro:<35}")
-
-                    input("\nPresione ENTER para volver al menú.")
-                    print("\n\n")
+                    print(resumenMensual(prestamos, alumnos, libros, anio, mes))
 
                 elif opcionSubmenu == "2":  # Opción 2 del submenú
                     anio = input("Ingrese el año (AAAA): ")
-
-                    resumen = resumenAnualPorLibroCantidad(prestamos, anio, libros)
-
-                    anchoNombre = 50
-                    anchoMes = 10
-                    totalColumnas = anchoNombre + (12 * anchoMes)
-
-                    meses = [
-                        "ENE",
-                        "FEB",
-                        "MAR",
-                        "ABR",
-                        "MAY",
-                        "JUN",
-                        "JUL",
-                        "AGO",
-                        "SEP",
-                        "OCT",
-                        "NOV",
-                        "DIC",
-                    ]
-
-                    print("-" * totalColumnas)
-                    print(
-                        "Resumen Anual de Reservas por Libro (Cantidades)".center(
-                            totalColumnas
-                        )
-                    )
-                    print("-" * totalColumnas)
-
-                    encabezado = f"{'Libros':<{anchoNombre}}"
-                    for m in meses:
-                        mesFormateado = f"{m}.{str(anio)[-2:]}"
-                        encabezado += f"{mesFormateado:>{anchoMes}}"
-                    print(encabezado)
-                    print("-" * totalColumnas)
-
-                    for idLibro, cantidades in resumen.items():
-                        nombre = libros.get(idLibro, {}).get(
-                            "titulo", f"Libro {idLibro}"
-                        )
-                        fila = f"{nombre:<{anchoNombre}}"
-                        for cantidad in cantidades:
-                            fila += f"{str(cantidad):>12.5}"
-                        print(fila)
+                    print(resumenAnualPorLibroCantidad(prestamos, anio, libros))
 
                 elif opcionSubmenu == "3":  # Opción 3 del submenú
                     anio = int(input("Ingrese el año (formato AAAA): "))
-                    resumen = resumenAnualPorLibroPesos(prestamos, libros, anio)
-
-                    anchoNombre = 50
-                    anchoMes = 10
-                    totalColumnas = anchoNombre + (12 * anchoMes)
-
-                    print("\n" + "-" * totalColumnas)
-                    print(
-                        "Resumen Anual de reservas por Libro (Pesos)".center(
-                            totalColumnas
-                        )
-                    )
-                    print("-" * totalColumnas)
-
-                    meses = [
-                        "ENE",
-                        "FEB",
-                        "MAR",
-                        "ABR",
-                        "MAY",
-                        "JUN",
-                        "JUL",
-                        "AGO",
-                        "SEP",
-                        "OCT",
-                        "NOV",
-                        "DIC",
-                    ]
-                    encabezado = ["Libros"] + [
-                        f"{mes}.{anio % 100:02d}" for mes in meses
-                    ]
-                    print(
-                        f"{encabezado[0]:<{anchoNombre}}"
-                        + "".join(f"{col:>{anchoMes}}" for col in encabezado[1:])
-                    )
-                    print("-" * totalColumnas)
-
-                    for libro, montos in resumen.items():
-                        print(
-                            f"{libro:<{anchoNombre}}"
-                            + "".join(
-                                f"{monto:>15}" if monto > 0 else f"{'':>15}"
-                                for monto in montos
-                            )
-                        )
-
-                    print("-" * totalColumnas)
+                    print(resumenAnualPorLibroPesos(prestamos, libros, anio))
 
                 elif opcionSubmenu == "4":  # Opción 4 del submenú
                     anio = int(input("Ingrese el año (formato AAAA): "))
-                    meses = [
-                        "ENE",
-                        "FEB",
-                        "MAR",
-                        "ABR",
-                        "MAY",
-                        "JUN",
-                        "JUL",
-                        "AGO",
-                        "SEP",
-                        "OCT",
-                        "NOV",
-                        "DIC",
-                    ]
-
-                    devolucionesIncorrectasPorMes = []
-                    for mes in range(1, 13):
-                        _, _, incorrectos = resumenMensual(prestamos, anio, mes)
-                        devolucionesIncorrectasPorMes.append(incorrectos)
-
-                    print("-" * 160)
-                    print(
-                        "Resumen anual de reservas con devolución incorrecta".center(
-                            160
-                        )
-                    )
-                    print("-" * 160)
-
-                    encabezado = "MESES ".ljust(15)
-                    for m in meses:
-                        encabezado += f"{m}.{str(anio)[-2:]} ".ljust(12)
-                    print(encabezado)
-
-                    print("-" * 160)
-
-                    fila = "Devol.Incorrect "
-                    for valor in devolucionesIncorrectasPorMes:
-                        fila += f"{valor}".ljust(16)
-                    print(fila)
-
-                    print("-" * 160)
+                    print(resumenAnualDevolucionesIncorrectas(prestamos, anio))
 
                     input("\nPresione ENTER para volver al menú.")
                     print("\n\n")
