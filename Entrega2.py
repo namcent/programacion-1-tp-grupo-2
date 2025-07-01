@@ -1,7 +1,7 @@
 """
 -----------------------------------------------------------------------------------------------
-Título: DESARROLLO PYTHON POR EQUIPO - VERSIÓN 1.0 - ENTREGA 1
-Fecha: 02/06/2025
+Título: DESARROLLO PYTHON POR EQUIPO - VERSIÓN 2.0 - ENTREGA 2
+Fecha: 07/07/2025
 Autor: Equipo 02
 
 Descripción: Una biblioteca de una organización educativa necesita el desarrollo de una
@@ -16,12 +16,18 @@ Pendientes:
 # MÓDULOS
 # ----------------------------------------------------------------------------------------------
 from datetime import datetime
+import json
+import re
+
+ALUMNOS_ARCHIVO = "alumnos.json"
+LIBROS_ARCHIVO = "libros.json"
+PRESTAMOS_ARCHIVO = "prestamos.json"
 
 
 # ----------------------------------------------------------------------------------------------
 # FUNCIONES
 # ----------------------------------------------------------------------------------------------
-def ingresarAlumno(_alumnos):
+def ingresarAlumno():
     """
     Registra un nuevo alumno en el diccionario de alumnos.
 
@@ -31,28 +37,38 @@ def ingresarAlumno(_alumnos):
     Retorno:
         _alumnos (dict): Diccionario de alumnos actualizado con la nueva entrada.
     """
-    idAlumno = input("Ingresá el ID del alumno: ").strip()
-    if idAlumno in _alumnos:
-        print("Error: el ID del alumno ya existe")
-        return _alumnos
+    try:
+        alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
+        idAlumno = input("Ingresá el ID del alumno: ").strip()
+        if idAlumno in alumnos:
+            print("Error: el ID del alumno ya existe")
 
-    _alumnos[idAlumno] = {
-        "activo": True,
-        "nombre": input("Nombre: ").strip(),
-        "apellido": input("Apellido: ").strip(),
-        "direccion": input("Dirección: ").strip(),
-        "email": input("Email: ").strip(),
-        "telefono": {
-            "celular": int(input("Teléfono celular: ")),
-            "fijo": int(input("Teléfono fijo: ")),
-        },
-        "infracciones": 0,
-    }
-    print(f"Alumno {idAlumno} registrado correctamente.")
-    return _alumnos
+        nombre = validarDato(input("Ingresar el nombre: "), "nombre", "string")
+        apellido = validarDato(input("Ingresar el nombre: "), "apellido", "string")
+        direccion = validarDato(input("Ingresar la direccion: "), "direccion", "direccion")
+        email = validarDato(input("Ingresar el email: "), "email", "email")
+        celular = validarDato(input("Ingresar el teléfono celular: "), "celular", "numero")
+        fijo = validarDato(input("Ingresar el teléfono fijo: "), "fijo", "numero")
+
+        alumnos[idAlumno] = {
+            "activo": True,
+            "nombre": nombre,
+            "apellido": apellido,
+            "direccion": direccion,
+            "email": email,
+            "telefono": {
+                "celular": celular,
+                "fijo": fijo,
+            },
+            "infracciones": 0,
+        }
+        escribirArchivo(ALUMNOS_ARCHIVO, alumnos)
+        print(f"Alumno {idAlumno} registrado correctamente.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def modificarAlumno(_alumnos):
+def modificarAlumno():
     """
     Modifica los datos básicos de un alumno existente.
 
@@ -63,22 +79,48 @@ def modificarAlumno(_alumnos):
         _alumnos (dict): Diccionario de alumnos con los cambios aplicados
         (o sin cambios si el ID no se encontró).
     """
-    idAlumno = input("ID del alumno a modificar: ")
-    if idAlumno not in _alumnos:
-        print("Error: el alumno no fue encontrado")
-        return _alumnos
+    try:
+        alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
+        idAlumno = validarDato(input("ID del alumno a modificar: "), "id", "id")
 
-    print("\nCampos disponibles para modificar: nombre, apellido, email, direccion")
-    campo = input("Ingresá el campo a modificar: ")
-    if campo in _alumnos[idAlumno]:
-        _alumnos[idAlumno][campo] = input(f"Nuevo valor para {campo}: ")
+        while idAlumno not in alumnos:
+            print("Error: el alumno no fue encontrado.")
+            entrada = input(f"Por favor ingrese el ID del alumno a modificar o 0 para volver: ")
+            if entrada == "0":
+                return
+            else:
+                idAlumno = validarDato(entrada, "id", "id")
+
+        print("\nCampos disponibles para modificar: nombre, apellido, email, direccion, celular, fijo")
+        campo = input("Ingresá el campo a modificar: ").strip().lower()
+
+        while campo not in alumnos[idAlumno]:
+            print("Error: campo inválido")
+            entradaCampo = input("Por favor ingrese el campo a modificar o 0 para volver: ").strip().lower()
+            if entradaCampo == "0":
+                return
+            campo = entradaCampo
+
+        if campo == "email":
+            validacion = "email"
+        elif campo in ("celular", "fijo"):
+            validacion = "numero"
+        elif campo == "direccion":
+            validacion = "direccion"
+        else:
+            validacion = "string"
+    
+        nuevoValor = validarDato(input(f"Nuevo valor para {campo}: "), campo, validacion)
+
+        alumnos[idAlumno][campo] = nuevoValor
+        escribirArchivo(ALUMNOS_ARCHIVO, alumnos)
         print(f"Modificación del campo {campo} exitosa")
-    else:
-        print("Campo invalido")
-    return _alumnos
+
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def inactivarAlumno(_alumnos):
+def inactivarAlumno():
     """
     Inactiva (baja lógica) a un alumno a partir de su ID.
 
@@ -89,16 +131,27 @@ def inactivarAlumno(_alumnos):
         _alumnos (dict): Diccionario de alumnos con el estado del alumno
         actualizado a inactivo si el ID existe.
     """
-    idAlumno = input("ID del alumno a inactivar: ")
-    if idAlumno in _alumnos:
-        _alumnos[idAlumno]["activo"] = False
+    try:
+        alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
+        idAlumno = validarDato(input("ID del alumno a marcar como inactivo: "), "id", "id")
+
+        while idAlumno not in alumnos:
+            print("Error: el alumno no fue encontrado.")
+            entrada = input(f"Por favor ingrese el ID del alumno a modificar o 0 para volver: ")
+            if entrada == "0":
+                return
+            else:
+                idAlumno = validarDato(entrada, "id", "id")
+
+        alumnos[idAlumno]["activo"] = False
+        escribirArchivo(ALUMNOS_ARCHIVO, alumnos)
         print(f"Alumno {idAlumno} inactivado")
-    else:
-        print("Error: el ID del alumno no existe")
-    return _alumnos
+
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def listarAlumnos(_alumnos):
+def listarAlumnos():
     """
     Muestra el listado de alumnos activos y sus datos.
 
@@ -108,37 +161,39 @@ def listarAlumnos(_alumnos):
     Retorno:
         _alumnos (dict): El mismo diccionario recibido, sin modificar.
     """
-    if not _alumnos:
-        print("No hay alumnos registrados.")
-        return _alumnos
+    try:
+        alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
 
-    print("\nLISTADO DE ALUMNOS ACTIVOS")
-    print("-" * 50)
+        if not alumnos:
+            print("No hay alumnos registrados.")
 
-    alumnosActivos = 0
+        print("\nLISTADO DE ALUMNOS ACTIVOS")
+        print("-" * 50)
 
-    for idAlumno, datos in _alumnos.items():
-        if datos["activo"]:
-            alumnosActivos += 1
+        alumnosActivos = 0
 
-            print(f"ID: {idAlumno}")
-            print(f"NOMBRE: {datos['nombre']} {datos['apellido']}")
-            print(f"DIRECCIÓN: {datos['direccion']}")
-            print(f"EMAIL: {datos['email']}")
-            print(
-                f"TELÉFONO: Cel: {datos['telefono']['celular']} | Fijo: {datos['telefono']['fijo']}"
-            )
-            print(f"ESTADO: {'Activo' if datos['activo'] else 'Inactivo'}")
-            print(f"INFRACCIONES: {datos['infracciones']}")
-            print("-" * 50)
+        for idAlumno, datos in alumnos.items():
+            if datos["activo"]:
+                alumnosActivos += 1
 
-    if alumnosActivos == 0:
-        print("No hay alumnos activos registrados.")
+                print(f"ID: {idAlumno}")
+                print(f"NOMBRE: {datos['nombre']} {datos['apellido']}")
+                print(f"DIRECCIÓN: {datos['direccion']}")
+                print(f"EMAIL: {datos['email']}")
+                print(
+                    f"TELÉFONO: Cel: {datos['telefono']['celular']} | Fijo: {datos['telefono']['fijo']}"
+                )
+                print(f"ESTADO: {'Activo' if datos['activo'] else 'Inactivo'}")
+                print(f"INFRACCIONES: {datos['infracciones']}")
+                print("-" * 50)
 
-    return _alumnos
+        if alumnosActivos == 0:
+            print("No hay alumnos activos registrados.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def ingresarLibro(_libros):
+def ingresarLibro():
     """
     Registra un nuevo libro en el diccionario de libros.
 
@@ -148,37 +203,51 @@ def ingresarLibro(_libros):
     Retorno:
         _libros (dict): Diccionario de libros actualizado con la nueva entrada.
     """
-    idlibro = input("ID del libro: ")
-    if idlibro in _libros:
-        print("El libro ya existe.")
-        return _libros
-    titulo = input("Título: ")
+    try:
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        idLibro = validarDato(input("ID del libro: "), "id", "id")
 
-    autores = input("Autores (separados por coma, máx 3): ").strip()
-    autoresCortados = [parte.strip() for parte in autores.split(",") if parte.strip()]
-    autoresRellenados = (autoresCortados + ["", "", ""])[:3]
-    dictAutores = {
-        "autor1": autoresRellenados[0],
-        "autor2": autoresRellenados[1],
-        "autor3": autoresRellenados[2],
-    }
+        while idLibro in libros:
+            print("El ID del libro que ingresó ya existe.")
+            entrada = input(f"Por favor ingrese un nuevo ID o 0 para volver: ")
+            if entrada == "0":
+                return
+            else:
+                idLibro = validarDato(entrada, "id", "id")
 
-    genero = input("Genero: ")
-    editorial = input("Editorial: ")
-    costo = int(input("Costo de garantía ($): "))
-    _libros[idlibro] = {
-        "titulo": titulo,
-        "autores": dictAutores,
-        "activo": True,
-        "genero": genero,
-        "editorial": editorial,
-        "costoGarantia": costo,
-    }
-    print("Libro ingresado correctamente.")
-    return _libros
+        titulo = validarDato(input("Ingresar el título: "), "título", "string")
+
+        autores = validarDato(input("Autores (separados por coma, máx 3): ").strip(), "autores", "autores")
+        autoresCortados = [
+            parte.strip() for parte in autores.split(",") if parte.strip()
+        ]
+        autoresRellenados = (autoresCortados + ["", "", ""])[:3]
+        dictAutores = {
+            "autor1": autoresRellenados[0],
+            "autor2": autoresRellenados[1],
+            "autor3": autoresRellenados[2],
+        }
+
+        genero = validarDato(input("Ingresar el género: "), "género", "string")
+        editorial = validarDato(input("Ingresar la editorial: "), "editorial", "string")
+        costo = validarDato(input("Ingresar el costo de garantía en $: "), "costo", "string")
+
+        libros[idLibro] = {
+            "titulo": titulo,
+            "autores": dictAutores,
+            "activo": True,
+            "genero": genero,
+            "editorial": editorial,
+            "costoGarantia": costo,
+        }
+
+        escribirArchivo(LIBROS_ARCHIVO, libros)
+        print("Libro ingresado correctamente.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def modificarLibro(_libros):
+def modificarLibro():
     """
     Modifica los datos básicos de un libro existente.
 
@@ -189,37 +258,62 @@ def modificarLibro(_libros):
         _libros (dict): Diccionario de libros con los cambios aplicados
         (o sin cambios si el ID no se encontró).
     """
-    idlibro = input("ID del libro a modificar: ")
-    if idlibro not in _libros:
-        print("Libro no encontrado.")
-        return _libros
+    try:
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        idLibro = validarDato(input("ID del libro a modificar: "), "id", "id")
 
-    titulo = input("Nuevo título: ")
+        while idLibro not in libros:
+            print("Error: el libro no fue encontrado.")
+            entrada = input(f"Por favor ingrese el ID del libro a modificar o 0 para volver: ")
+            if entrada == "0":
+                return
+            else:
+                idLibro = validarDato(entrada, "id", "id")
 
-    autores = input("Nuevo/s autor/es (separados por coma, máx 3): ").strip()
-    autoresCortados = [parte.strip() for parte in autores.split(",") if parte.strip()]
-    autoresRellenados = (autoresCortados + ["", "", ""])[:3]
-    dictAutores = {
-        "autor1": autoresRellenados[0],
-        "autor2": autoresRellenados[1],
-        "autor3": autoresRellenados[2],
-    }
+        print("\nCampos disponibles para modificar: titulo, autores, genero, editorial, costo")
+        campo = validarDato(input("Ingresá el campo a modificar: ").strip().lower(), "campo", "string")
+        
 
-    genero = input("Nuevo genero: ")
-    editorial = input("Nueva editorial: ")
-    costo = int(input("Nuevo costo de garantía ($): "))
+        while campo not in libros[idLibro]:
+            print("Error: campo inválido")
+            entradaCampo = validarDato(input("Por favor ingrese el campo a modificar o 0 para volver: ").strip().lower(), "campo", "string")
+            if entradaCampo == "0":
+                return
+            campo = entradaCampo
 
-    _libros[idlibro]["titulo"] = titulo
-    _libros[idlibro]["autores"] = dictAutores
-    _libros[idlibro]["genero"] = genero
-    _libros[idlibro]["editorial"] = editorial
-    _libros[idlibro]["costoGarantia"] = costo
+        if campo == "costo":
+            campo = "costoGarantia"
+        # Si es campo autores -> función auxiliar para validar
+        if campo == "autores":
+            autores = validarDato(input("Nuevo valor para autores (separados por coma, máx 3): ").strip(), "autores", "autores")
+            autoresCortados = [
+                parte.strip() for parte in autores.split(",") if parte.strip()
+            ]
+            autoresRellenados = (autoresCortados + ["", "", ""])[:3]
+            nuevoValor = {
+                "autor1": autoresRellenados[0],
+                "autor2": autoresRellenados[1],
+                "autor3": autoresRellenados[2],
+            }
+        else:
+            if campo == "costoGarantia":
+                validacion = "numero"
+            else:
+                validacion = "string"
+            nuevoValor = validarDato(input(f"Nuevo valor para {campo}: "), campo, validacion)
 
-    print("Libro modificado correctamente.")
-    return _libros
+            if campo == "costoGarantia":
+                nuevoValor = int(nuevoValor)
+
+        libros[idLibro][campo] = nuevoValor
+
+        escribirArchivo(LIBROS_ARCHIVO, libros)
+        print(f"Modificación del campo {campo} exitosa")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def listarLibros(_libros):
+def listarLibros():
     """
     Muestra el listado completo de libros y sus datos.
 
@@ -229,35 +323,36 @@ def listarLibros(_libros):
     Retorno:
         _libros (dict): El mismo diccionario recibido, sin modificar.
     """
-    if not _libros:
-        print("No hay libros registrados.")
-        return _libros
+    try:
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        if not libros:
+            print("No hay libros registrados.")
 
-    librosActivos = 0
+        librosActivos = 0
 
-    print("\nLISTADO DE LIBROS")
-    print("-" * 50)
+        print("\nLISTADO DE LIBROS")
+        print("-" * 50)
 
-    for idLibro, datos in _libros.items():
-        if datos["activo"]:
-            librosActivos += 1
-            print(f"ID: {idLibro}")
-            print(f"TÍTULO: {datos['titulo']}")
-            print(
-                f"AUTORES: {datos['autores']['autor1']} , {datos['autores']['autor2']} , {datos['autores']['autor3']}"
-            )
-            print(f"GÉNERO: {datos['genero']}")
-            print(f"COSTO: {datos['costoGarantia']}")
-            print(f"ESTADO: {'Activo' if datos['activo'] else 'Inactivo'}")
-            print("-" * 50)
+        for idLibro, datos in libros.items():
+            if datos["activo"]:
+                librosActivos += 1
+                print(f"ID: {idLibro}")
+                print(f"TÍTULO: {datos['titulo']}")
+                print(
+                    f"AUTORES: {datos['autores']['autor1']} , {datos['autores']['autor2']} , {datos['autores']['autor3']}"
+                )
+                print(f"GÉNERO: {datos['genero']}")
+                print(f"COSTO: {datos['costoGarantia']}")
+                print(f"ESTADO: {'Activo' if datos['activo'] else 'Inactivo'}")
+                print("-" * 50)
 
-    if librosActivos == 0:
-        print("No hay libros activos registrados.")
+        if librosActivos == 0:
+            print("No hay libros activos registrados.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
-    return _libros
 
-
-def marcarInactivo(_libros):
+def inactivarLibro():
     """
     Marca un libro como inactivo (baja lógica) a partir de su ID.
 
@@ -268,16 +363,27 @@ def marcarInactivo(_libros):
         _libros (dict): Diccionario de libros con el estado del libro
         actualizado a inactivo si el ID existe.
     """
-    idlibro = input("ID del libro a marcar como inactivo: ")
-    if idlibro in _libros:
-        _libros[idlibro]["activo"] = False
-        print("Libro marcado como inactivo.")
-    else:
-        print("Libro no encontrado.")
-    return _libros
+    try:
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        idLibro = validarDato(input("ID del libro a marcar como inactivo: "), "id", "id")
+
+        while idLibro not in libros:
+            print("Error: el libro no fue encontrado.")
+            entrada = input(f"Por favor ingrese el ID del libro a marcar como inactivo o 0 para volver: ")
+            if entrada == "0":
+                return
+            else:
+                idLibro = validarDato(entrada, "id", "id")
+
+        libros[idLibro]["activo"] = False
+        escribirArchivo(LIBROS_ARCHIVO, libros)
+        print(f"Libro {idLibro} marcado como inactivo.")
+
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def registrarPrestamo(_alumnos, _libros, _prestamos):
+def registrarPrestamo():
     """
     Registra un nuevo préstamo y lo agrega al diccionario de préstamos.
 
@@ -289,36 +395,49 @@ def registrarPrestamo(_alumnos, _libros, _prestamos):
     Retorno:
         _prestamos (dict): Diccionario de préstamos actualizado con la nueva operación.
     """
-    idAlumno = input("Ingrese el ID del alumno (ej. A1003): ").strip()
-    idLibro = input("Ingrese el ID del libro  (ej. L1007): ").strip()
+    try:
+        alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
 
-    if idAlumno not in _alumnos or not _alumnos[idAlumno]["activo"]:
-        print("El alumno no existe o está inactivo.")
-        return _prestamos
+        idAlumno = validarDato(input("Ingrese el ID del alumno: "), "id", "id")
+        idLibro = validarDato(input("Ingrese el ID del libro: "), "id", "id")
 
-    if idLibro not in _libros or not _libros[idLibro]["activo"]:
-        print("El libro no existe o no está disponible.")
-        return _prestamos
+        while idAlumno not in alumnos or not alumnos[idAlumno]["activo"]:
+            print("Error: el alumno no existe o está inactivo.")
+            entrada = input(f"Por favor, ingrese el ID del alumno o 0 para volver: ")
+            if entrada == "0":
+                return
+            else:
+                idAlumno = validarDato(entrada, "id", "id")
 
-    idPrestamo = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
-    fechaInicio = datetime.now()
+        while idLibro not in libros or not libros[idLibro]["activo"]:
+            print("Error: el libro no existe o no está disponible.")
+            entrada = input(f"Por favor, ingrese el ID del libro o 0 para volver: ")
+            if entrada == "0":
+                return
+            else:
+                idLibro = validarDato(entrada, "id", "id")
 
-    _prestamos[idPrestamo] = {
-        "idPrestamo": idPrestamo,
-        "idAlumno": idAlumno,
-        "idLibro": idLibro,
-        "cantidadDias": 0,
-        "fechaInicio": fechaInicio.strftime("%Y-%m-%d"),
-        "fechaFinalizacion": "",
-        "estadoDevolucionCorrecto": False,
-    }
+        idPrestamo = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
+        fechaInicio = datetime.now()
 
-    print(f"Préstamo registrado con ID: {idPrestamo}")
+        prestamos[idPrestamo] = {
+            "idPrestamo": idPrestamo,
+            "idAlumno": idAlumno,
+            "idLibro": idLibro,
+            "cantidadDias": 0,
+            "fechaInicio": fechaInicio.strftime("%Y-%m-%d"),
+            "fechaFinalizacion": "",
+            "estadoDevolucionCorrecto": False,
+        }
+        escribirArchivo(PRESTAMOS_ARCHIVO, prestamos)
+        print(f"Préstamo con ID: {idPrestamo} registrado exitosamente.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
-    return _prestamos
 
-
-def finalizarPrestamo(_alumnos, _libros, _prestamos):
+def finalizarPrestamo():
     """
     Finaliza un préstamo, registra la devolución, calcula el monto y actualiza infracciones.
 
@@ -331,65 +450,70 @@ def finalizarPrestamo(_alumnos, _libros, _prestamos):
         _prestamos (dict): Diccionario de préstamos con los datos del préstamo cerrado.
         _alumnos (dict): Diccionario de alumnos (modificado si se suma infracción).
     """
-    idPrestamo = input(
-        "Ingrese el ID del préstamo (0 para volver al menú anterior): "
-    ).strip()
+    try:
+        alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
 
-    while idPrestamo not in _prestamos and idPrestamo != "0":
-        print("El préstamo no existe.")
-        reintento = (
-            input("Ingrese 'r' para reintentar o '0' para volver: ").strip().lower()
-        )
-        if reintento == "0":
-            return _prestamos, _alumnos
-        idPrestamo = input("Ingrese nuevamente el ID del préstamo: ").strip()
+        idPrestamo = input(
+            "Ingrese el ID del préstamo (0 para volver al menú anterior): "
+        ).strip()
 
-    if idPrestamo == "0":
-        return _prestamos, _alumnos
+        while idPrestamo not in prestamos and idPrestamo != "0":
+            print("El préstamo no existe.")
+            reintento = (
+                input("Ingrese 'r' para reintentar o '0' para volver: ").strip().lower()
+            )
+            if reintento == "0":
+                return
+            idPrestamo = input("Ingrese nuevamente el ID del préstamo: ").strip()
 
-    prestamo = _prestamos[idPrestamo]
+        if idPrestamo == "0":
+            return
 
-    fechaInicio = datetime.strptime(prestamo["fechaInicio"], "%Y-%m-%d")
-    fechaFin = datetime.now()
+        prestamo = prestamos[idPrestamo]
 
-    diasPrestamo = (fechaFin - fechaInicio).days
-    if diasPrestamo == 0:
-        diasPrestamo = 1
+        fechaInicio = datetime.strptime(prestamo["fechaInicio"], "%Y-%m-%d")
+        fechaFin = datetime.now()
 
-    idLibro = prestamo["idLibro"]
+        diasPrestamo = (fechaFin - fechaInicio).days
+        if diasPrestamo == 0:
+            diasPrestamo = 1
 
-    costoDiario = _libros[idLibro]["costoGarantia"]
-    montoTotal = costoDiario * diasPrestamo
+        idLibro = prestamo["idLibro"]
 
-    prestamo["fechaFinalizacion"] = fechaFin.strftime("%Y-%m-%d")
-    prestamo["cantidadDias"] = diasPrestamo
+        costoDiario = libros[idLibro]["costoGarantia"]
+        montoTotal = costoDiario * diasPrestamo
 
-    devolucion = (
-        input("¿La devolución es correcta? (s = sí / n = no): ").strip().lower()
-    )
+        prestamo["fechaFinalizacion"] = fechaFin.strftime("%Y-%m-%d")
+        prestamo["cantidadDias"] = diasPrestamo
 
-    while devolucion not in ("s", "n"):
-        print("Error. Ingrese 's' o 'n'.")
-        devolucion = (
-            input("¿La devolución es correcta? (s = sí / n = no): ").strip().lower()
-        )
+        devolucion = validarDato(input("¿La devolución es correcta? (s = sí / n = no): ").strip().lower(), "respuesta", "string")
 
-    devolucionCorrecta = devolucion == "s"
+        while devolucion not in ("s", "n"):
+            print("Error. Ingrese 's' o 'n'.")
+            devolucion = validarDato(input("¿La devolución es correcta? (s = sí / n = no): ").strip().lower(), "respuesta", "string")
 
-    if not devolucionCorrecta:
-        idAlumno = prestamo["idAlumno"]
-        _alumnos[idAlumno]["infracciones"] += 1
-        print("Se añadió 1 infracción al alumno.")
+        devolucionCorrecta = devolucion == "s"
 
-    print(f"\nPréstamo finalizado correctamente.")
-    print(f"Días prestados: {diasPrestamo}")
-    print(f"Costo por día : {costoDiario}")
-    print(f"Total a pagar : {montoTotal}\n")
+        if not devolucionCorrecta:
+            idAlumno = prestamo["idAlumno"]
+            alumnos[idAlumno]["infracciones"] += 1
+            escribirArchivo(ALUMNOS_ARCHIVO, alumnos)
+            print("Se añadió 1 infracción al alumno.")
 
-    return _prestamos, _alumnos
+        escribirArchivo(ALUMNOS_ARCHIVO, alumnos)
+        escribirArchivo(PRESTAMOS_ARCHIVO, prestamos)
+
+        print(f"\nPréstamo finalizado correctamente.")
+        print(f"Días prestados: {diasPrestamo}")
+        print(f"Costo por día : {costoDiario}")
+        print(f"Total a pagar : {montoTotal}\n")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def resumenMensual(_prestamos, _alumnos, _libros, _anio, _mes):
+def resumenMensual():
     """
     Genera un resumen de los préstamos realizados en un mes específico.
 
@@ -403,25 +527,37 @@ def resumenMensual(_prestamos, _alumnos, _libros, _anio, _mes):
     Retorno:
         str: texto formateado con el resumen mensual de préstamos realizados en un mes.
     """
-    salida = []
-    salida.append(f"Listado de reservas del mes {_mes}/{_anio}")
-    salida.append(f"{'Fecha/Hora':<35}{'Alumno':<35}{'Libro':<35}")
-    salida.append("-" * 105)
+    try:
+        alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
 
-    for clave, prestamo in _prestamos.items():
-        fecha = prestamo["fechaInicio"]
-        if fecha.startswith(f"{_anio}-{str(_mes).zfill(2)}"):
-            fechaHora = clave
-            idAlumno = prestamo["idAlumno"]
-            nombreAlumno = _alumnos.get(idAlumno, {}).get("nombre", f"Alumno {idAlumno}")
-            idLibro = prestamo["idLibro"]
-            tituloLibro = _libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}")
-            salida.append(f"{fechaHora:<35}{nombreAlumno:<35}{tituloLibro:<35}")
+        anio = int(validarDato(input("Ingrese el año (formato AAAA): "),"año", "numero"))
+        mes = int(validarDato(input("Ingrese el mes (1-12): "), "mes", "numero"))
 
-    return "\n".join(salida)
+        salida = []
+        salida.append(f"Listado de reservas del mes {mes}/{anio}")
+        salida.append(f"{'Fecha/Hora':<35}{'Alumno':<35}{'Libro':<35}")
+        salida.append("-" * 105)
+
+        for clave, prestamo in prestamos.items():
+            fecha = prestamo["fechaInicio"]
+            if fecha.startswith(f"{anio}-{str(mes).zfill(2)}"):
+                fechaHora = clave
+                idAlumno = prestamo["idAlumno"]
+                nombreAlumno = alumnos.get(idAlumno, {}).get(
+                    "nombre", f"Alumno {idAlumno}"
+                )
+                idLibro = prestamo["idLibro"]
+                tituloLibro = libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}")
+                salida.append(f"{fechaHora:<35}{nombreAlumno:<35}{tituloLibro:<35}")
+
+        return "\n".join(salida)
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def resumenAnualPorLibroCantidad(_prestamos, _anio, _libros):
+def resumenAnualPorLibroCantidad():
     """
     Genera un resumen anual con la cantidad de préstamos por libro.
 
@@ -433,29 +569,35 @@ def resumenAnualPorLibroCantidad(_prestamos, _anio, _libros):
     Retorno:
         str: texto formateado con las reservas mensuales de libros.
     """
-    resumen = {idLibro: [0] * 12 for idLibro in _libros.keys()}
+    try:
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
 
-    for prestamo in _prestamos.values():
-        fecha = prestamo["fechaInicio"]
-        if fecha.startswith(str(_anio)):
-            mes = int(fecha[5:7])
-            libro = prestamo["idLibro"]
-            if libro in resumen:
-                resumen[libro][mes - 1] += 1
+        anio = int(validarDato(input("Ingrese el año (formato AAAA): "),"año", "numero"))
 
-    resumenPorTitulo = {
-        _libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}"): valores
-        for idLibro, valores in resumen.items()
-    }
+        resumen = {idLibro: [0] * 12 for idLibro in libros.keys()}
 
-    return formateoInformes(
-        resumenPorTitulo,
-        _anio,
-        "Resumen Anual de Reservas por Libro (Cantidades)"
-    )
+        for prestamo in prestamos.values():
+            fecha = prestamo["fechaInicio"]
+            if fecha.startswith(str(anio)):
+                mes = int(fecha[5:7])
+                libro = prestamo["idLibro"]
+                if libro in resumen:
+                    resumen[libro][mes - 1] += 1
+
+        resumenPorTitulo = {
+            libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}"): valores
+            for idLibro, valores in resumen.items()
+        }
+
+        return formateoInformes(
+            resumenPorTitulo, anio, "Resumen Anual de Reservas por Libro (Cantidades)"
+        )
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
-def resumenAnualPorLibroPesos(_prestamos, _libros, _anio):
+def resumenAnualPorLibroPesos():
     """
     Genera un resumen anual del dinero en garantía movido por libro.
 
@@ -467,28 +609,37 @@ def resumenAnualPorLibroPesos(_prestamos, _libros, _anio):
     Retorno:
         str: texto formateado con el monto acumulado mensualmente por libro.
     """
-    resumen = {}
+    try:
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
+        
+        anio = int(validarDato(input("Ingrese el año (formato AAAA): "),"año", "numero"))
 
-    for prestamo in _prestamos.values():
-        fecha = prestamo["fechaInicio"]
-        if fecha.startswith(str(_anio)):
-            mes = int(fecha[5:7]) - 1
-            idLibro = prestamo["idLibro"]
-            nombreLibro = _libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}")
-            costo = _libros.get(idLibro, {}).get("costoGarantia", 0)
+        resumen = {}
 
-            if nombreLibro not in resumen:
-                resumen[nombreLibro] = [0] * 12
-            resumen[nombreLibro][mes] += costo
+        for prestamo in prestamos.values():
+            fecha = prestamo["fechaInicio"]
+            if fecha.startswith(str(anio)):
+                mes = int(fecha[5:7]) - 1
+                idLibro = prestamo["idLibro"]
+                nombreLibro = libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}")
+                costo = libros.get(idLibro, {}).get("costoGarantia", 0)
 
-    return formateoInformes(
-        resumen,
-        _anio,
-        "Resumen Anual de Reservas por Libro (Pesos)",
-        _esDinero=True
-    )
+                if nombreLibro not in resumen:
+                    resumen[nombreLibro] = [0] * 12
+                resumen[nombreLibro][mes] += costo
 
-def resumenAnualDevolucionesIncorrectas(_prestamos, _anio):
+        return formateoInformes(
+            resumen,
+            anio,
+            "Resumen Anual de Reservas por Libro (Pesos)",
+            _esDinero=True,
+        )
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+
+
+def resumenAnualDevolucionesIncorrectas():
     """
     Genera el resumen anual de devoluciones incorrectas por mes.
 
@@ -499,40 +650,61 @@ def resumenAnualDevolucionesIncorrectas(_prestamos, _anio):
     Retorno:
         str: texto formateado con devoluciones incorrectas por mes.
     """
-    meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
-             "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+    try:
+        prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
+        
+        anio = int(validarDato(input("Ingrese el año (formato AAAA): "),"año", "numero"))
 
-    incorrectasPorMes = []
-    for mes in range(1, 13):
-        count = 0
-        for prestamo in _prestamos.values():
-            fecha = prestamo["fechaInicio"]
-            if fecha.startswith(f"{_anio}-{str(mes).zfill(2)}"):
-                if not prestamo.get("estadoDevolucionCorrecto", True):
-                    count += 1
-        incorrectasPorMes.append(count)
+        meses = [
+            "ENE",
+            "FEB",
+            "MAR",
+            "ABR",
+            "MAY",
+            "JUN",
+            "JUL",
+            "AGO",
+            "SEP",
+            "OCT",
+            "NOV",
+            "DIC",
+        ]
 
-    anchoTotal = 160
-    salida = []
-    salida.append("-" * anchoTotal)
-    salida.append("Resumen anual de reservas con devolución incorrecta".center(anchoTotal))
-    salida.append("-" * anchoTotal)
+        incorrectasPorMes = []
+        for mes in range(1, 13):
+            count = 0
+            for prestamo in prestamos.values():
+                fecha = prestamo["fechaInicio"]
+                if fecha.startswith(f"{anio}-{str(mes).zfill(2)}"):
+                    if not prestamo.get("estadoDevolucionCorrecto", True):
+                        count += 1
+            incorrectasPorMes.append(count)
 
-    encabezado = "MESES".ljust(15)
-    for m in meses:
-        encabezado += f"{m}.{str(_anio)[-2:]}".center(12)
-    salida.append(encabezado)
+        anchoTotal = 160
+        salida = []
+        salida.append("-" * anchoTotal)
+        salida.append(
+            "Resumen anual de reservas con devolución incorrecta".center(anchoTotal)
+        )
+        salida.append("-" * anchoTotal)
 
-    salida.append("-" * anchoTotal)
+        encabezado = "MESES".ljust(15)
+        for m in meses:
+            encabezado += f"{m}.{str(anio)[-2:]}".center(12)
+        salida.append(encabezado)
 
-    fila = "Devol.Incorrect".ljust(15)
-    for val in incorrectasPorMes:
-        fila += f"{val}".center(12)
-    salida.append(fila)
+        salida.append("-" * anchoTotal)
 
-    salida.append("-" * anchoTotal)
+        fila = "Devol.Incorrect".ljust(15)
+        for val in incorrectasPorMes:
+            fila += f"{val}".center(12)
+        salida.append(fila)
 
-    return "\n".join(salida)
+        salida.append("-" * anchoTotal)
+
+        return "\n".join(salida)
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 
 def formateoInformes(_diccionario, _anio, _titulo, _esDinero=False):
@@ -554,8 +726,20 @@ def formateoInformes(_diccionario, _anio, _titulo, _esDinero=False):
     anchoMes = 10
     totalColumnas = anchoNombre + (12 * anchoMes)
 
-    meses = ["ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
-             "JUL", "AGO", "SEP", "OCT", "NOV", "DIC"]
+    meses = [
+        "ENE",
+        "FEB",
+        "MAR",
+        "ABR",
+        "MAY",
+        "JUN",
+        "JUL",
+        "AGO",
+        "SEP",
+        "OCT",
+        "NOV",
+        "DIC",
+    ]
 
     salida = []
     salida.append("-" * totalColumnas)
@@ -581,6 +765,147 @@ def formateoInformes(_diccionario, _anio, _titulo, _esDinero=False):
     return "\n".join(salida)
 
 
+def cargarArchivo(direccion):
+    archivo = open(direccion, mode="w", encoding="utf-8")
+    diccionario = json.load(archivo)
+    archivo.close
+    return diccionario
+
+
+def escribirArchivo(direccion, diccionario):
+    archivo = open(direccion, mode="w", encoding="utf-8")
+    json.dump(diccionario, archivo, ensure_ascii=False, indent=4)
+    archivo.close()
+
+
+def esEmailValido(dato):
+    if dato is None or dato.strip() == "":
+        return False
+    pat = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pat, dato) is not None
+
+
+def esNumeroValido(dato):
+    if dato is None or dato.strip() == "":
+        return False
+    
+    """
+    for ch in dato:
+        if ch < "0" or ch > "9":
+            return False
+    """
+    try:
+        int(dato)
+        return True
+    except ValueError:
+        return False
+
+
+def esStringValido(dato):
+    if dato is None or dato.strip() == "":
+        return False
+    
+    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$"
+    return re.match(patron, dato) is not None
+
+
+def esDireccionValida(dato):
+    """
+    Permite letras (incluye tildes y ñ), números y espacios.
+    """
+    if dato is None or dato.strip() == "":
+        return False
+    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9]+)*$"
+    return re.match(patron, dato) is not None
+
+def esIdValido(dato):
+    """
+    ID válido: una letra (mayúscula o minúscula) seguida de al menos un dígito. Permite mayúsculas y minúsculas.
+    """
+    if dato is None or dato.strip() == "":
+        return False
+    patron = r"^[A-Za-z]\d+$"
+    return re.match(patron, dato) is not None
+
+def sonAutoresValidos(dato):
+    if dato is None or dato.strip() == "":
+        return False
+    patrón = (
+        r'^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
+        r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*'
+        r'(?:\s*,\s*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
+        r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*)*$'
+    )
+    return re.match(patrón, dato) is not None
+
+def validarDato(dato, tipo, validacion):
+    if validacion == "email":
+        validador = esEmailValido
+    elif validacion == "numero":
+        validador = esNumeroValido
+    elif validacion == "id":
+        validador = esIdValido
+    elif validacion == "direccion":
+        validador = esDireccionValida
+    elif validacion == "autores":
+        validador = sonAutoresValidos
+    else:
+        validador = esStringValido
+
+    dato = dato.strip()
+
+    while not validador(dato):
+        dato = input(f"Error. Por favor ingrese un {tipo} válido: ").strip()
+    return dato
+
+"""def agregarDatos(direccion, nuevoId, datos):
+    try:
+        # Carga todos los datos contenidos en el archivo JSON
+        diccionario = cargarArchivo(direccion)
+        # Agrega un nuevo empleado al diccionario (Aquí los datos se pedirían al usuario)
+        #nuevoId = "789" #diccionario[:-1]
+        #datos = {"nombre":"Lucía","apellido":"Ríos","edad":28, "estado":"activo"}
+        diccionario[nuevoId] = datos
+        # Sobrescribe el archivo JSON con todos los datos (los originales y los cambios)
+        escribirArchivo(direccion, diccionario)
+
+        print(f"Se ha agregado correctamente el nuevo registro.")
+    
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+
+def mostrarDatos(direccion):
+    try:
+        diccionario = cargarArchivo(direccion)
+        # Muestra por pantalla el diccionario
+        print("Listado de ...:")
+        for legajo, datos in diccionario.items():
+            print(f"{legajo}{datos['apellido']},{datos['nombre']} {datos['edad']} {datos['estado']}")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+
+def modificarDatos(direccion, id, datoAModificar, datoModificado):
+    try:
+        diccionario = cargarArchivo(direccion)
+        # Modifica en el diccionario la edad del empleado (Aquí este dato se pediría al usuario)
+        diccionario[id][datoAModificar] = datoModificado
+        escribirArchivo(direccion, diccionario)
+        print(f"Se ha modificado correctamente el registro {id}.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+
+def eliminarDatos(direccion, id):
+    try:
+        diccionario = cargarArchivo(direccion)
+        # Elimina del diccionario al empleado (este dato se pediría al usuario)
+        del diccionario[id]
+        escribirArchivo(direccion, diccionario)
+        print(f"Se ha eliminado correctamente el registro {id}.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+        """
+
+
 # ----------------------------------------------------------------------------------------------
 # CUERPO PRINCIPAL
 # ----------------------------------------------------------------------------------------------
@@ -588,6 +913,7 @@ def main():
     # -------------------------------------------------
     # Inicialización de variables
     # ----------------------------------------------------------------------------------------------
+    """
     alumnos = {
         "A1001": {
             "activo": True,
@@ -860,6 +1186,7 @@ def main():
             "estadoDevolucionCorrecto": True,
         },
     }
+    """
 
     # ----------------------------------------------------------------------------------------------
     # Bloque de menú
@@ -925,16 +1252,16 @@ def main():
                     break  # No sale del programa, sino que vuelve al menú anterior
 
                 elif opcionSubmenu == "1":  # Opción 1 del submenú
-                    alumnos = ingresarAlumno(alumnos)
+                    ingresarAlumno()
 
                 elif opcionSubmenu == "2":  # Opción 2 del submenú
-                    alumnos = modificarAlumno(alumnos)
+                    modificarAlumno()
 
                 elif opcionSubmenu == "3":  # Opción 3 del submenú
-                    alumnos = inactivarAlumno(alumnos)
+                    inactivarAlumno()
 
                 elif opcionSubmenu == "4":  # Opción 4 del submenú
-                    listarAlumnos(alumnos)
+                    listarAlumnos()
 
                 input("\nPresione ENTER para volver al menú.")  # Pausa entre opciones
                 print("\n\n")
@@ -970,16 +1297,16 @@ def main():
                     break  # No sale del programa, sino que vuelve al menú anterior
 
                 elif opcionSubmenu == "1":  # Opción 1 del submenú
-                    libros = ingresarLibro(libros)
+                    ingresarLibro()
 
                 elif opcionSubmenu == "2":  # Opción 2 del submenú
-                    libros = modificarLibro(libros)
+                    modificarLibro()
 
                 elif opcionSubmenu == "3":  # Opción 3 del submenú
-                    libros = marcarInactivo(libros)
+                    inactivarLibro()
 
                 elif opcionSubmenu == "4":  # Opción 4 del submenú
-                    listarLibros(libros)
+                    listarLibros()
 
                 input("\nPresione ENTER para volver al menú.")  # Pausa entre opciones
                 print("\n\n")
@@ -1013,10 +1340,10 @@ def main():
                     break  # No sale del programa, sino que vuelve al menú anterior
 
                 elif opcionSubmenu == "1":  # Opción 1 del submenú
-                    prestamos = registrarPrestamo(alumnos, libros, prestamos)
+                    registrarPrestamo()
 
                 elif opcionSubmenu == "2":  # Opción 2 del submenú
-                    prestamos, alumnos = finalizarPrestamo(alumnos, libros, prestamos)
+                    finalizarPrestamo()
 
                 input("\nPresione ENTER para volver al menú.")  # Pausa entre opciones
                 print("\n\n")
@@ -1053,21 +1380,16 @@ def main():
                     break  # No sale del programa, sino que vuelve al menú anterior
 
                 elif opcionSubmenu == "1":  # Opción 1 del submenú
-                    anio = int(input("Ingrese el año (formato AAAA): "))
-                    mes = int(input("Ingrese el mes (1-12): "))
-                    print(resumenMensual(prestamos, alumnos, libros, anio, mes))
+                    print(resumenMensual())
 
                 elif opcionSubmenu == "2":  # Opción 2 del submenú
-                    anio = input("Ingrese el año (AAAA): ")
-                    print(resumenAnualPorLibroCantidad(prestamos, anio, libros))
+                    print(resumenAnualPorLibroCantidad())
 
                 elif opcionSubmenu == "3":  # Opción 3 del submenú
-                    anio = int(input("Ingrese el año (formato AAAA): "))
-                    print(resumenAnualPorLibroPesos(prestamos, libros, anio))
+                    print(resumenAnualPorLibroPesos())
 
                 elif opcionSubmenu == "4":  # Opción 4 del submenú
-                    anio = int(input("Ingrese el año (formato AAAA): "))
-                    print(resumenAnualDevolucionesIncorrectas(prestamos, anio))
+                    print(resumenAnualDevolucionesIncorrectas())
 
                     input("\nPresione ENTER para volver al menú.")
                     print("\n\n")

@@ -1,0 +1,92 @@
+{
+    "2025.05.01 09:15:32": {
+        "idPrestamo": "2025.05.01 09:15:32",
+        "idAlumno": "A1001",
+        "idLibro": "L1002",
+        "cantidadDias": 14,
+        "fechaInicio": "2025-05-01",
+        "fechaFinalizacion": "2025-05-15",
+        "estadoDevolucionCorrecto": true
+    },
+    "2025.05.03 14:07:45": {
+        "idPrestamo": "2025.05.03 14:07:45",
+        "idAlumno": "A1002",
+        "idLibro": "L1005",
+        "cantidadDias": 7,
+        "fechaInicio": "2025-05-03",
+        "fechaFinalizacion": "2025-05-10",
+        "estadoDevolucionCorrecto": true
+    },
+    "2025.04.20 11:55:12": {
+        "idPrestamo": "2025.04.20 11:55:12",
+        "idAlumno": "A1003",
+        "idLibro": "L1001",
+        "cantidadDias": 21,
+        "fechaInicio": "2025-04-20",
+        "fechaFinalizacion": "2025-05-11",
+        "estadoDevolucionCorrecto": false
+    },
+    "2025.05.25 16:20:05": {
+        "idPrestamo": "2025.05.25 16:20:05",
+        "idAlumno": "A1004",
+        "idLibro": "L1008",
+        "cantidadDias": 10,
+        "fechaInicio": "2025-05-25",
+        "fechaFinalizacion": "2025-06-04",
+        "estadoDevolucionCorrecto": true
+    },
+    "2025.04.10 10:40:00": {
+        "idPrestamo": "2025.04.10 10:40:00",
+        "idAlumno": "A1005",
+        "idLibro": "L1004",
+        "cantidadDias": 30,
+        "fechaInicio": "2025-04-10",
+        "fechaFinalizacion": "2025-05-10",
+        "estadoDevolucionCorrecto": true
+    },
+    "2025.05.18 13:27:18": {
+        "idPrestamo": "2025.05.18 13:27:18",
+        "idAlumno": "A1006",
+        "idLibro": "L1006",
+        "cantidadDias": 15,
+        "fechaInicio": "2025-05-18",
+        "fechaFinalizacion": "2025-06-02",
+        "estadoDevolucionCorrecto": false
+    },
+    "2025.05.22 08:50:01": {
+        "idPrestamo": "2025.05.22 08:50:01",
+        "idAlumno": "A1007",
+        "idLibro": "L1003",
+        "cantidadDias": 12,
+        "fechaInicio": "2025-05-22",
+        "fechaFinalizacion": "2025-06-03",
+        "estadoDevolucionCorrecto": true
+    },
+    "2025.05.28 12:12:09": {
+        "idPrestamo": "2025.05.28 12:12:09",
+        "idAlumno": "A1008",
+        "idLibro": "L1009",
+        "cantidadDias": 20,
+        "fechaInicio": "2025-05-28",
+        "fechaFinalizacion": "2025-06-17",
+        "estadoDevolucionCorrecto": true
+    },
+    "2025.05.30 18:33:44": {
+        "idPrestamo": "2025.05.30 18:33:44",
+        "idAlumno": "A1009",
+        "idLibro": "L1010",
+        "cantidadDias": 8,
+        "fechaInicio": "2025-05-30",
+        "fechaFinalizacion": "2025-06-07",
+        "estadoDevolucionCorrecto": false
+    },
+    "2025.05.05 15:05:29": {
+        "idPrestamo": "2025.05.05 15:05:29",
+        "idAlumno": "A1010",
+        "idLibro": "L1007",
+        "cantidadDias": 25,
+        "fechaInicio": "2025-05-05",
+        "fechaFinalizacion": "2025-05-30",
+        "estadoDevolucionCorrecto": true
+    }
+}
