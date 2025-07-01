@@ -1,0 +1,122 @@
+{
+    "A1001": {
+        "activo": true,
+        "nombre": "Ana",
+        "apellido": "López",
+        "direccion": "Calle Falsa 123, CABA",
+        "email": "ana@mail.com",
+        "telefono": {
+            "celular": 1122334455,
+            "fijo": 47891234
+        },
+        "infracciones": 0
+    },
+    "A1002": {
+        "activo": false,
+        "nombre": "Carlos",
+        "apellido": "Gómez",
+        "direccion": "Av. Libertador 456, CABA",
+        "email": "carlos@mail.com",
+        "telefono": {
+            "celular": 1155667788,
+            "fijo": 0
+        },
+        "infracciones": 2
+    },
+    "A1003": {
+        "activo": true,
+        "nombre": "Luisa",
+        "apellido": "Martínez",
+        "direccion": "Corrientes 789, CABA",
+        "email": "luisa@mail.com",
+        "telefono": {
+            "celular": 1199887766,
+            "fijo": 43021987
+        },
+        "infracciones": 1
+    },
+    "A1004": {
+        "activo": true,
+        "nombre": "Pedro",
+        "apellido": "Díaz",
+        "direccion": "Belgrano 101, CABA",
+        "email": "pedro@mail.com",
+        "telefono": {
+            "celular": 1133445566,
+            "fijo": 45612378
+        },
+        "infracciones": 3
+    },
+    "A1005": {
+        "activo": true,
+        "nombre": "Marta",
+        "apellido": "Pérez",
+        "direccion": "Cabildo 202, CABA",
+        "email": "marta@mail.com",
+        "telefono": {
+            "celular": 1177889900,
+            "fijo": 0
+        },
+        "infracciones": 0
+    },
+    "A1006": {
+        "activo": false,
+        "nombre": "Jorge",
+        "apellido": "Rodríguez",
+        "direccion": "Scalabrini Ortiz 333, CABA",
+        "email": "jorge@mail.com",
+        "telefono": {
+            "celular": 1122334455,
+            "fijo": 48235791
+        },
+        "infracciones": 1
+    },
+    "A1007": {
+        "activo": true,
+        "nombre": "Sofía",
+        "apellido": "Fernández",
+        "direccion": "Av. Rivadavia 8500, CABA",
+        "email": "sofia@mail.com",
+        "telefono": {
+            "celular": 1144221133,
+            "fijo": 0
+        },
+        "infracciones": 2
+    },
+    "A1008": {
+        "activo": true,
+        "nombre": "Diego",
+        "apellido": "Suárez",
+        "direccion": "Av. San Juan 2500, CABA",
+        "email": "diego@mail.com",
+        "telefono": {
+            "celular": 1188997766,
+            "fijo": 43006789
+        },
+        "infracciones": 0
+    },
+    "A1009": {
+        "activo": true,
+        "nombre": "Valeria",
+        "apellido": "Prieto",
+        "direccion": "José León Suárez 1550, CABA",
+        "email": "valeria@mail.com",
+        "telefono": {
+            "celular": 1133556688,
+            "fijo": 0
+        },
+        "infracciones": 1
+    },
+    "A1010": {
+        "activo": true,
+        "nombre": "Esteban",
+        "apellido": "Ramos",
+        "direccion": "Av. Las Heras 3400, CABA",
+        "email": "esteban@mail.com",
+        "telefono": {
+            "celular": 1166442211,
+            "fijo": 47771234
+        },
+        "infracciones": 3
+    }
+}
