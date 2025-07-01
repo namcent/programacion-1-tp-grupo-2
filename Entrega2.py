@@ -766,7 +766,7 @@ def formateoInformes(_diccionario, _anio, _titulo, _esDinero=False):
 
 
 def cargarArchivo(direccion):
-    archivo = open(direccion, mode="w", encoding="utf-8")
+    archivo = open(direccion, mode="r", encoding="utf-8")
     diccionario = json.load(archivo)
     archivo.close
     return diccionario
