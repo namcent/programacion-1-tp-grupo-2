@@ -39,16 +39,22 @@ def ingresarAlumno():
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
-        idAlumno = input("Ingresá el ID del alumno: ").strip()
-        if idAlumno in alumnos:
-            print("Error: el ID del alumno ya existe")
+        idAlumno = input("Ingresá el ID del alumno: ").strip().upper()
+
+        while idAlumno in alumnos:
+            print("El ID del alumno que ingresó ya existe.")
+            entrada = input(f"Por favor ingrese un nuevo ID o 0 para volver: ").strip().upper()
+            if entrada == "0":
+                return
+            else:
+                idAlumno = validarDato(entrada, "id", "id").upper()
 
         nombre = validarDato(input("Ingresar el nombre: "), "nombre", "string")
-        apellido = validarDato(input("Ingresar el nombre: "), "apellido", "string")
+        apellido = validarDato(input("Ingresar el apellido: "), "apellido", "string")
         direccion = validarDato(input("Ingresar la direccion: "), "direccion", "direccion")
         email = validarDato(input("Ingresar el email: "), "email", "email")
-        celular = validarDato(input("Ingresar el teléfono celular: "), "celular", "numero")
-        fijo = validarDato(input("Ingresar el teléfono fijo: "), "fijo", "numero")
+        celular = int(validarDato(input("Ingresar el teléfono celular: "), "celular", "numero"))
+        fijo = int(validarDato(input("Ingresar el teléfono fijo: "), "fijo", "numero"))
 
         alumnos[idAlumno] = {
             "activo": True,
@@ -81,20 +87,20 @@ def modificarAlumno():
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
-        idAlumno = validarDato(input("ID del alumno a modificar: "), "id", "id")
+        idAlumno = validarDato(input("ID del alumno a modificar: "), "id", "id").strip().upper()
 
         while idAlumno not in alumnos:
             print("Error: el alumno no fue encontrado.")
-            entrada = input(f"Por favor ingrese el ID del alumno a modificar o 0 para volver: ")
+            entrada = input(f"Por favor ingrese el ID del alumno a modificar o 0 para volver: ").strip().upper()
             if entrada == "0":
                 return
             else:
-                idAlumno = validarDato(entrada, "id", "id")
+                idAlumno = validarDato(entrada, "id", "id").upper()
 
         print("\nCampos disponibles para modificar: nombre, apellido, email, direccion, celular, fijo")
         campo = input("Ingresá el campo a modificar: ").strip().lower()
 
-        while campo not in alumnos[idAlumno]:
+        while campo not in alumnos[idAlumno] and campo not in alumnos[idAlumno]["telefono"]:
             print("Error: campo inválido")
             entradaCampo = input("Por favor ingrese el campo a modificar o 0 para volver: ").strip().lower()
             if entradaCampo == "0":
@@ -112,7 +118,11 @@ def modificarAlumno():
     
         nuevoValor = validarDato(input(f"Nuevo valor para {campo}: "), campo, validacion)
 
-        alumnos[idAlumno][campo] = nuevoValor
+        if campo in ("celular", "fijo"):
+            alumnos[idAlumno]["telefono"][campo] = int(nuevoValor)
+        else:
+            alumnos[idAlumno][campo] = nuevoValor
+
         escribirArchivo(ALUMNOS_ARCHIVO, alumnos)
         print(f"Modificación del campo {campo} exitosa")
 
@@ -133,15 +143,15 @@ def inactivarAlumno():
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
-        idAlumno = validarDato(input("ID del alumno a marcar como inactivo: "), "id", "id")
+        idAlumno = validarDato(input("ID del alumno a marcar como inactivo: "), "id", "id").strip().upper()
 
         while idAlumno not in alumnos:
             print("Error: el alumno no fue encontrado.")
-            entrada = input(f"Por favor ingrese el ID del alumno a modificar o 0 para volver: ")
+            entrada = input(f"Por favor ingrese el ID del alumno a modificar o 0 para volver: ").strip().upper()
             if entrada == "0":
                 return
             else:
-                idAlumno = validarDato(entrada, "id", "id")
+                idAlumno = validarDato(entrada, "id", "id").upper()
 
         alumnos[idAlumno]["activo"] = False
         escribirArchivo(ALUMNOS_ARCHIVO, alumnos)
@@ -205,15 +215,15 @@ def ingresarLibro():
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
-        idLibro = validarDato(input("ID del libro: "), "id", "id")
+        idLibro = validarDato(input("ID del libro: "), "id", "id").strip().upper()
 
         while idLibro in libros:
             print("El ID del libro que ingresó ya existe.")
-            entrada = input(f"Por favor ingrese un nuevo ID o 0 para volver: ")
+            entrada = input(f"Por favor ingrese un nuevo ID o 0 para volver: ").strip().upper()
             if entrada == "0":
                 return
             else:
-                idLibro = validarDato(entrada, "id", "id")
+                idLibro = validarDato(entrada, "id", "id").upper()
 
         titulo = validarDato(input("Ingresar el título: "), "título", "string")
 
@@ -230,7 +240,7 @@ def ingresarLibro():
 
         genero = validarDato(input("Ingresar el género: "), "género", "string")
         editorial = validarDato(input("Ingresar la editorial: "), "editorial", "string")
-        costo = validarDato(input("Ingresar el costo de garantía en $: "), "costo", "string")
+        costo = int(validarDato(input("Ingresar el costo de garantía en $: "), "costo", "numero"))
 
         libros[idLibro] = {
             "titulo": titulo,
@@ -260,19 +270,20 @@ def modificarLibro():
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
-        idLibro = validarDato(input("ID del libro a modificar: "), "id", "id")
+        idLibro = validarDato(input("ID del libro a modificar: "), "id", "id").strip().upper()
 
         while idLibro not in libros:
             print("Error: el libro no fue encontrado.")
-            entrada = input(f"Por favor ingrese el ID del libro a modificar o 0 para volver: ")
+            entrada = input(f"Por favor ingrese el ID del libro a modificar o 0 para volver: ").strip().upper()
             if entrada == "0":
                 return
             else:
-                idLibro = validarDato(entrada, "id", "id")
+                idLibro = validarDato(entrada, "id", "id").upper()
 
         print("\nCampos disponibles para modificar: titulo, autores, genero, editorial, costo")
         campo = validarDato(input("Ingresá el campo a modificar: ").strip().lower(), "campo", "string")
-        
+        if campo == "costo":
+            campo = "costoGarantia"
 
         while campo not in libros[idLibro]:
             print("Error: campo inválido")
@@ -281,9 +292,6 @@ def modificarLibro():
                 return
             campo = entradaCampo
 
-        if campo == "costo":
-            campo = "costoGarantia"
-        # Si es campo autores -> función auxiliar para validar
         if campo == "autores":
             autores = validarDato(input("Nuevo valor para autores (separados por coma, máx 3): ").strip(), "autores", "autores")
             autoresCortados = [
@@ -300,6 +308,7 @@ def modificarLibro():
                 validacion = "numero"
             else:
                 validacion = "string"
+
             nuevoValor = validarDato(input(f"Nuevo valor para {campo}: "), campo, validacion)
 
             if campo == "costoGarantia":
@@ -365,15 +374,15 @@ def inactivarLibro():
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
-        idLibro = validarDato(input("ID del libro a marcar como inactivo: "), "id", "id")
+        idLibro = validarDato(input("ID del libro a marcar como inactivo: "), "id", "id").strip().upper()
 
         while idLibro not in libros:
             print("Error: el libro no fue encontrado.")
-            entrada = input(f"Por favor ingrese el ID del libro a marcar como inactivo o 0 para volver: ")
+            entrada = input(f"Por favor ingrese el ID del libro a marcar como inactivo o 0 para volver: ").strip().upper()
             if entrada == "0":
                 return
             else:
-                idLibro = validarDato(entrada, "id", "id")
+                idLibro = validarDato(entrada, "id", "id").upper()
 
         libros[idLibro]["activo"] = False
         escribirArchivo(LIBROS_ARCHIVO, libros)
@@ -815,7 +824,7 @@ def esDireccionValida(dato):
     """
     if dato is None or dato.strip() == "":
         return False
-    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9]+)*$"
+    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+)*$"
     return re.match(patron, dato) is not None
 
 def esIdValido(dato):
@@ -855,7 +864,7 @@ def validarDato(dato, tipo, validacion):
     dato = dato.strip()
 
     while not validador(dato):
-        dato = input(f"Error. Por favor ingrese un {tipo} válido: ").strip()
+        dato = input(f"Error. Por favor ingrese un/a/os {tipo} válido/a/s: ").strip()
     return dato
 
 """def agregarDatos(direccion, nuevoId, datos):
