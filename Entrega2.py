@@ -27,6 +27,130 @@ PRESTAMOS_ARCHIVO = "prestamos.json"
 # ----------------------------------------------------------------------------------------------
 # FUNCIONES
 # ----------------------------------------------------------------------------------------------
+def esEmailValido(dato):
+    if dato is None or dato.strip() == "":
+        return False
+    pat = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(pat, dato) is not None
+
+def esNumeroValido(dato):
+    if dato is None or dato.strip() == "":
+        return False
+
+    try:
+        int(dato)
+        return True
+    except ValueError:
+        return False
+
+def esIdValido(dato):
+    """
+    ID válido: una letra (mayúscula o minúscula) seguida de al menos un dígito. Permite mayúsculas y minúsculas.
+    """
+    if dato is None or dato.strip() == "":
+        return False
+    patron = r"^[A-Za-z]\d+$"
+    return re.match(patron, dato) is not None
+
+def esIdPrestamoValido(dato):
+    if dato is None or dato.strip() == "":
+        return False
+
+    patron = (
+        r"^\d{4}\."                       # Año
+        r"(0[1-9]|1[0-2])\."              # Mes
+        r"(0[1-9]|[12]\d|3[01]) "         # Día
+        r"([01]\d|2[0-3]):"               # Hora
+        r"[0-5]\d:"                       # Minuto
+        r"[0-5]\d$"                       # Segundo
+    )
+    return re.match(patron, dato) is not None
+
+def esDireccionValida(dato):
+    """
+    Permite letras (incluye tildes y ñ), números y espacios.
+    """
+    if dato is None or dato.strip() == "":
+        return False
+    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+)*$"
+    return re.match(patron, dato) is not None
+
+def sonAutoresValidos(dato):
+    if dato is None or dato.strip() == "":
+        return False
+    patrón = (
+        r'^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
+        r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*'
+        r'(?:\s*,\s*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
+        r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*)*$'
+    )
+    return re.match(patrón, dato) is not None
+
+def esStringValido(dato):
+    if dato is None or dato.strip() == "":
+        return False
+    
+    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$"
+    return re.match(patron, dato) is not None
+
+def validarDato(dato, tipo, validacion):
+    if validacion == "email":
+        validador = esEmailValido
+    elif validacion == "numero":
+        validador = esNumeroValido
+    elif validacion == "id":
+        validador = esIdValido
+    elif validacion == "idPrestamo":
+        validador = esIdPrestamoValido
+    elif validacion == "direccion":
+        validador = esDireccionValida
+    elif validacion == "autores":
+        validador = sonAutoresValidos
+    else:
+        validador = esStringValido
+
+    dato = dato.strip()
+
+    while not validador(dato):
+        dato = input(f"Error. Por favor ingrese un/a/os {tipo} válido/a/s: ").strip()
+    return dato
+
+def cargarArchivo(direccion):
+    archivo = open(direccion, mode="r", encoding="utf-8")
+    diccionario = json.load(archivo)
+    archivo.close()
+    return diccionario
+
+def escribirArchivo(direccion, diccionario):
+    archivo = open(direccion, mode="w", encoding="utf-8")
+    json.dump(diccionario, archivo, ensure_ascii=False, indent=4)
+    archivo.close()
+
+def pedirYValidarId(diccionario, tipo, validarExistente, validacion):
+    id = validarDato(input(f"Ingrese el ID del {tipo}: "), "id", validacion).strip().upper()
+        
+    if validarExistente:
+        while id not in diccionario or not diccionario[id]["activo"]:
+            print(f"Error: el ID del {tipo} no existe o está inactivo.")
+            entrada = input(f"Por favor, ingrese el ID del {tipo} (0 para volver): ").strip().upper()
+            if entrada == "0":
+                return
+            else:
+                id = validarDato(entrada, "id", validacion).upper()
+
+        return id
+    else:
+        while id in diccionario:
+            print(f"Error: el ID del {tipo} que ingresó ya existe.")
+            entrada = input(f"Por favor ingrese un nuevo ID del {tipo} (0 para volver): ").strip().upper()
+            if entrada == "0":
+                return
+            else:
+                id = validarDato(entrada, "id", validacion).upper()
+
+        return id
+
+
 def ingresarAlumno():
     """
     Registra un nuevo alumno en el diccionario de alumnos.
@@ -39,15 +163,9 @@ def ingresarAlumno():
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
-        idAlumno = input("Ingresá el ID del alumno: ").strip().upper()
-
-        while idAlumno in alumnos:
-            print("El ID del alumno que ingresó ya existe.")
-            entrada = input(f"Por favor ingrese un nuevo ID o 0 para volver: ").strip().upper()
-            if entrada == "0":
-                return
-            else:
-                idAlumno = validarDato(entrada, "id", "id").upper()
+        idAlumno = pedirYValidarId(alumnos, "alumno", False, "id")
+        if idAlumno is None:
+            return
 
         nombre = validarDato(input("Ingresar el nombre: "), "nombre", "string")
         apellido = validarDato(input("Ingresar el apellido: "), "apellido", "string")
@@ -87,15 +205,9 @@ def modificarAlumno():
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
-        idAlumno = validarDato(input("ID del alumno a modificar: "), "id", "id").strip().upper()
-
-        while idAlumno not in alumnos:
-            print("Error: el alumno no fue encontrado.")
-            entrada = input(f"Por favor ingrese el ID del alumno a modificar o 0 para volver: ").strip().upper()
-            if entrada == "0":
-                return
-            else:
-                idAlumno = validarDato(entrada, "id", "id").upper()
+        idAlumno = pedirYValidarId(alumnos, "alumno", True, "id")
+        if idAlumno is None:
+            return
 
         print("\nCampos disponibles para modificar: nombre, apellido, email, direccion, celular, fijo")
         campo = input("Ingresá el campo a modificar: ").strip().lower()
@@ -143,15 +255,9 @@ def inactivarAlumno():
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
-        idAlumno = validarDato(input("ID del alumno a marcar como inactivo: "), "id", "id").strip().upper()
-
-        while idAlumno not in alumnos:
-            print("Error: el alumno no fue encontrado.")
-            entrada = input(f"Por favor ingrese el ID del alumno a modificar o 0 para volver: ").strip().upper()
-            if entrada == "0":
-                return
-            else:
-                idAlumno = validarDato(entrada, "id", "id").upper()
+        idAlumno = pedirYValidarId(alumnos, "alumno", True, "id")
+        if idAlumno is None:
+            return
 
         alumnos[idAlumno]["activo"] = False
         escribirArchivo(ALUMNOS_ARCHIVO, alumnos)
@@ -215,15 +321,9 @@ def ingresarLibro():
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
-        idLibro = validarDato(input("ID del libro: "), "id", "id").strip().upper()
-
-        while idLibro in libros:
-            print("El ID del libro que ingresó ya existe.")
-            entrada = input(f"Por favor ingrese un nuevo ID o 0 para volver: ").strip().upper()
-            if entrada == "0":
-                return
-            else:
-                idLibro = validarDato(entrada, "id", "id").upper()
+        idLibro = pedirYValidarId(libros, "libro", False, "id")
+        if idLibro is None:
+            return
 
         titulo = validarDato(input("Ingresar el título: "), "título", "string")
 
@@ -270,15 +370,9 @@ def modificarLibro():
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
-        idLibro = validarDato(input("ID del libro a modificar: "), "id", "id").strip().upper()
-
-        while idLibro not in libros:
-            print("Error: el libro no fue encontrado.")
-            entrada = input(f"Por favor ingrese el ID del libro a modificar o 0 para volver: ").strip().upper()
-            if entrada == "0":
-                return
-            else:
-                idLibro = validarDato(entrada, "id", "id").upper()
+        idLibro = pedirYValidarId(libros, "libro", True, "id")
+        if idLibro is None:
+            return
 
         print("\nCampos disponibles para modificar: titulo, autores, genero, editorial, costo")
         campo = validarDato(input("Ingresá el campo a modificar: ").strip().lower(), "campo", "string")
@@ -322,6 +416,31 @@ def modificarLibro():
         print("Error al intentar abrir archivo(s):", detalle)
 
 
+def inactivarLibro():
+    """
+    Marca un libro como inactivo (baja lógica) a partir de su ID.
+
+    Parámetros:
+        _libros (dict): Diccionario de libros (clave: idLibro).
+
+    Retorno:
+        _libros (dict): Diccionario de libros con el estado del libro
+        actualizado a inactivo si el ID existe.
+    """
+    try:
+        libros = cargarArchivo(LIBROS_ARCHIVO)
+        idLibro = pedirYValidarId(libros, "libro", True, "id")
+        if idLibro is None:
+            return
+
+        libros[idLibro]["activo"] = False
+        escribirArchivo(LIBROS_ARCHIVO, libros)
+        print(f"Libro {idLibro} marcado como inactivo.")
+
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+
+
 def listarLibros():
     """
     Muestra el listado completo de libros y sus datos.
@@ -361,37 +480,6 @@ def listarLibros():
         print("Error al intentar abrir archivo(s):", detalle)
 
 
-def inactivarLibro():
-    """
-    Marca un libro como inactivo (baja lógica) a partir de su ID.
-
-    Parámetros:
-        _libros (dict): Diccionario de libros (clave: idLibro).
-
-    Retorno:
-        _libros (dict): Diccionario de libros con el estado del libro
-        actualizado a inactivo si el ID existe.
-    """
-    try:
-        libros = cargarArchivo(LIBROS_ARCHIVO)
-        idLibro = validarDato(input("ID del libro a marcar como inactivo: "), "id", "id").strip().upper()
-
-        while idLibro not in libros:
-            print("Error: el libro no fue encontrado.")
-            entrada = input(f"Por favor ingrese el ID del libro a marcar como inactivo o 0 para volver: ").strip().upper()
-            if entrada == "0":
-                return
-            else:
-                idLibro = validarDato(entrada, "id", "id").upper()
-
-        libros[idLibro]["activo"] = False
-        escribirArchivo(LIBROS_ARCHIVO, libros)
-        print(f"Libro {idLibro} marcado como inactivo.")
-
-    except (FileNotFoundError, OSError) as detalle:
-        print("Error al intentar abrir archivo(s):", detalle)
-
-
 def registrarPrestamo():
     """
     Registra un nuevo préstamo y lo agrega al diccionario de préstamos.
@@ -409,24 +497,13 @@ def registrarPrestamo():
         libros = cargarArchivo(LIBROS_ARCHIVO)
         prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
 
-        idAlumno = validarDato(input("Ingrese el ID del alumno: "), "id", "id")
-        idLibro = validarDato(input("Ingrese el ID del libro: "), "id", "id")
-
-        while idAlumno not in alumnos or not alumnos[idAlumno]["activo"]:
-            print("Error: el alumno no existe o está inactivo.")
-            entrada = input(f"Por favor, ingrese el ID del alumno o 0 para volver: ")
-            if entrada == "0":
-                return
-            else:
-                idAlumno = validarDato(entrada, "id", "id")
-
-        while idLibro not in libros or not libros[idLibro]["activo"]:
-            print("Error: el libro no existe o no está disponible.")
-            entrada = input(f"Por favor, ingrese el ID del libro o 0 para volver: ")
-            if entrada == "0":
-                return
-            else:
-                idLibro = validarDato(entrada, "id", "id")
+        idAlumno = pedirYValidarId(alumnos, "alumno", True, "id")
+        if idAlumno is None:
+            return
+        
+        idLibro = pedirYValidarId(libros, "libro", True, "id")
+        if idLibro is None:
+            return
 
         idPrestamo = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
         fechaInicio = datetime.now()
@@ -464,20 +541,8 @@ def finalizarPrestamo():
         libros = cargarArchivo(LIBROS_ARCHIVO)
         prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
 
-        idPrestamo = input(
-            "Ingrese el ID del préstamo (0 para volver al menú anterior): "
-        ).strip()
-
-        while idPrestamo not in prestamos and idPrestamo != "0":
-            print("El préstamo no existe.")
-            reintento = (
-                input("Ingrese 'r' para reintentar o '0' para volver: ").strip().lower()
-            )
-            if reintento == "0":
-                return
-            idPrestamo = input("Ingrese nuevamente el ID del préstamo: ").strip()
-
-        if idPrestamo == "0":
+        idPrestamo = pedirYValidarId(prestamos, "préstamo", True, "idPrestamo")
+        if idPrestamo is None:
             return
 
         prestamo = prestamos[idPrestamo]
@@ -772,148 +837,6 @@ def formateoInformes(_diccionario, _anio, _titulo, _esDinero=False):
 
     salida.append("-" * totalColumnas)
     return "\n".join(salida)
-
-
-def cargarArchivo(direccion):
-    archivo = open(direccion, mode="r", encoding="utf-8")
-    diccionario = json.load(archivo)
-    archivo.close
-    return diccionario
-
-
-def escribirArchivo(direccion, diccionario):
-    archivo = open(direccion, mode="w", encoding="utf-8")
-    json.dump(diccionario, archivo, ensure_ascii=False, indent=4)
-    archivo.close()
-
-
-def esEmailValido(dato):
-    if dato is None or dato.strip() == "":
-        return False
-    pat = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-    return re.match(pat, dato) is not None
-
-
-def esNumeroValido(dato):
-    if dato is None or dato.strip() == "":
-        return False
-    
-    """
-    for ch in dato:
-        if ch < "0" or ch > "9":
-            return False
-    """
-    try:
-        int(dato)
-        return True
-    except ValueError:
-        return False
-
-
-def esStringValido(dato):
-    if dato is None or dato.strip() == "":
-        return False
-    
-    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$"
-    return re.match(patron, dato) is not None
-
-
-def esDireccionValida(dato):
-    """
-    Permite letras (incluye tildes y ñ), números y espacios.
-    """
-    if dato is None or dato.strip() == "":
-        return False
-    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+)*$"
-    return re.match(patron, dato) is not None
-
-def esIdValido(dato):
-    """
-    ID válido: una letra (mayúscula o minúscula) seguida de al menos un dígito. Permite mayúsculas y minúsculas.
-    """
-    if dato is None or dato.strip() == "":
-        return False
-    patron = r"^[A-Za-z]\d+$"
-    return re.match(patron, dato) is not None
-
-def sonAutoresValidos(dato):
-    if dato is None or dato.strip() == "":
-        return False
-    patrón = (
-        r'^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
-        r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*'
-        r'(?:\s*,\s*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
-        r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*)*$'
-    )
-    return re.match(patrón, dato) is not None
-
-def validarDato(dato, tipo, validacion):
-    if validacion == "email":
-        validador = esEmailValido
-    elif validacion == "numero":
-        validador = esNumeroValido
-    elif validacion == "id":
-        validador = esIdValido
-    elif validacion == "direccion":
-        validador = esDireccionValida
-    elif validacion == "autores":
-        validador = sonAutoresValidos
-    else:
-        validador = esStringValido
-
-    dato = dato.strip()
-
-    while not validador(dato):
-        dato = input(f"Error. Por favor ingrese un/a/os {tipo} válido/a/s: ").strip()
-    return dato
-
-"""def agregarDatos(direccion, nuevoId, datos):
-    try:
-        # Carga todos los datos contenidos en el archivo JSON
-        diccionario = cargarArchivo(direccion)
-        # Agrega un nuevo empleado al diccionario (Aquí los datos se pedirían al usuario)
-        #nuevoId = "789" #diccionario[:-1]
-        #datos = {"nombre":"Lucía","apellido":"Ríos","edad":28, "estado":"activo"}
-        diccionario[nuevoId] = datos
-        # Sobrescribe el archivo JSON con todos los datos (los originales y los cambios)
-        escribirArchivo(direccion, diccionario)
-
-        print(f"Se ha agregado correctamente el nuevo registro.")
-    
-    except (FileNotFoundError, OSError) as detalle:
-        print("Error al intentar abrir archivo(s):", detalle)
-
-def mostrarDatos(direccion):
-    try:
-        diccionario = cargarArchivo(direccion)
-        # Muestra por pantalla el diccionario
-        print("Listado de ...:")
-        for legajo, datos in diccionario.items():
-            print(f"{legajo}{datos['apellido']},{datos['nombre']} {datos['edad']} {datos['estado']}")
-    except (FileNotFoundError, OSError) as detalle:
-        print("Error al intentar abrir archivo(s):", detalle)
-
-def modificarDatos(direccion, id, datoAModificar, datoModificado):
-    try:
-        diccionario = cargarArchivo(direccion)
-        # Modifica en el diccionario la edad del empleado (Aquí este dato se pediría al usuario)
-        diccionario[id][datoAModificar] = datoModificado
-        escribirArchivo(direccion, diccionario)
-        print(f"Se ha modificado correctamente el registro {id}.")
-    except (FileNotFoundError, OSError) as detalle:
-        print("Error al intentar abrir archivo(s):", detalle)
-
-def eliminarDatos(direccion, id):
-    try:
-        diccionario = cargarArchivo(direccion)
-        # Elimina del diccionario al empleado (este dato se pediría al usuario)
-        del diccionario[id]
-        escribirArchivo(direccion, diccionario)
-        print(f"Se ha eliminado correctamente el registro {id}.")
-    except (FileNotFoundError, OSError) as detalle:
-        print("Error al intentar abrir archivo(s):", detalle)
-        """
-
 
 # ----------------------------------------------------------------------------------------------
 # CUERPO PRINCIPAL
