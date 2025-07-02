@@ -37,10 +37,14 @@ def esEmailValido(_dato):
     Retorno:
         bool: True si cumple, False en caso contrario.
     """
-    if _dato is None or _dato.strip() == "":
+    try:
+        if _dato is None or _dato.strip() == "":
+            return False
+        pat = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+        return re.match(pat, _dato) is not None
+    except Exception as e:
+        print(f"Error inesperado en la validación de email: {e}")
         return False
-    pat = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-    return re.match(pat, _dato) is not None
 
 def esNumeroValido(_dato):
     """
@@ -52,13 +56,15 @@ def esNumeroValido(_dato):
     Retorno:
         bool: True si puede convertirse a entero, False en caso contrario.
     """
-    if _dato is None or _dato.strip() == "":
-        return False
-
     try:
+        if _dato is None or _dato.strip() == "":
+            return False
         int(_dato)
         return True
-    except ValueError:
+    except (ValueError):
+        return False
+    except Exception as e:
+        print(f"Error inesperado en la validación de número: {e}")
         return False
 
 def esIdValido(_dato):
@@ -71,10 +77,14 @@ def esIdValido(_dato):
     Retorno:
         bool: True si cumple el patrón, False en caso contrario.
     """
-    if _dato is None or _dato.strip() == "":
+    try:
+        if _dato is None or _dato.strip() == "":
+            return False
+        patron = r"^[A-Za-z]\d+$"
+        return re.match(patron, _dato) is not None
+    except Exception as e:
+        print(f"Error inesperado en la validación de ID: {e}")
         return False
-    patron = r"^[A-Za-z]\d+$"
-    return re.match(patron, _dato) is not None
 
 def esIdPrestamoValido(_dato):
     """
@@ -86,18 +96,22 @@ def esIdPrestamoValido(_dato):
     Retorno:
         bool: True si coincide con el patrón de fecha y hora, False en caso contrario.
     """
-    if _dato is None or _dato.strip() == "":
-        return False
+    try:
+        if _dato is None or _dato.strip() == "":
+            return False
 
-    patron = (
-        r"^\d{4}\."                       # Año
-        r"(0[1-9]|1[0-2])\."              # Mes
-        r"(0[1-9]|[12]\d|3[01]) "         # Día
-        r"([01]\d|2[0-3]):"               # Hora
-        r"[0-5]\d:"                       # Minuto
-        r"[0-5]\d$"                       # Segundo
-    )
-    return re.match(patron, _dato) is not None
+        patron = (
+            r"^\d{4}\."                       # Año
+            r"(0[1-9]|1[0-2])\."              # Mes
+            r"(0[1-9]|[12]\d|3[01]) "         # Día
+            r"([01]\d|2[0-3]):"               # Hora
+            r"[0-5]\d:"                       # Minuto
+            r"[0-5]\d$"                       # Segundo
+        )
+        return re.match(patron, _dato) is not None
+    except Exception as e:
+        print(f"Error inesperado en la validación de ID de préstamo: {e}")
+        return False
 
 def esDireccionValida(_dato):
     """
@@ -109,10 +123,14 @@ def esDireccionValida(_dato):
     Retorno:
         bool: True si cumple, False en caso contrario.
     """
-    if _dato is None or _dato.strip() == "":
+    try:
+        if _dato is None or _dato.strip() == "":
+            return False
+        patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+)*$"
+        return re.match(patron, _dato) is not None
+    except Exception as e:
+        print(f"Error inesperado en la validación de dirección: {e}")
         return False
-    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+)*$"
-    return re.match(patron, _dato) is not None
 
 def sonAutoresValidos(_dato):
     """
@@ -124,15 +142,19 @@ def sonAutoresValidos(_dato):
     Retorno:
         bool: True si hay entre 1 y 3 cadenas de letras válidas separadas por comas, False en caso contrario.
     """
-    if _dato is None or _dato.strip() == "":
+    try:
+        if _dato is None or _dato.strip() == "":
+            return False
+        patrón = (
+            r'^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
+            r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*'
+            r'(?:\s*,\s*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
+            r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*)*$'
+        )
+        return re.match(patrón, _dato) is not None
+    except Exception as e:
+        print(f"Error inesperado en la validación de autores: {e}")
         return False
-    patrón = (
-        r'^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
-        r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*'
-        r'(?:\s*,\s*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
-        r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*)*$'
-    )
-    return re.match(patrón, _dato) is not None
 
 def esStringValido(_dato):
     """
@@ -144,11 +166,15 @@ def esStringValido(_dato):
     Retorno:
         bool: True si cumple, False en caso contrario.
     """
-    if _dato is None or _dato.strip() == "":
+    try:
+        if _dato is None or _dato.strip() == "":
+            return False
+        
+        patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$"
+        return re.match(patron, _dato) is not None
+    except Exception as e:
+        print(f"Error inesperado en la validación de string: {e}")
         return False
-    
-    patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$"
-    return re.match(patron, _dato) is not None
 
 def validarDato(_dato, _tipo, _validacion):
     """
@@ -162,26 +188,30 @@ def validarDato(_dato, _tipo, _validacion):
     Retorno:
         str: Valor validado y formateado (strip/upper) que cumple la validación.
     """
-    if _validacion == "email":
-        validador = esEmailValido
-    elif _validacion == "numero":
-        validador = esNumeroValido
-    elif _validacion == "id":
-        validador = esIdValido
-    elif _validacion == "idPrestamo":
-        validador = esIdPrestamoValido
-    elif _validacion == "direccion":
-        validador = esDireccionValida
-    elif _validacion == "autores":
-        validador = sonAutoresValidos
-    else:
-        validador = esStringValido
+    try:
+        if _validacion == "email":
+            validador = esEmailValido
+        elif _validacion == "numero":
+            validador = esNumeroValido
+        elif _validacion == "id":
+            validador = esIdValido
+        elif _validacion == "idPrestamo":
+            validador = esIdPrestamoValido
+        elif _validacion == "direccion":
+            validador = esDireccionValida
+        elif _validacion == "autores":
+            validador = sonAutoresValidos
+        else:
+            validador = esStringValido
 
-    dato = _dato.strip()
+        dato = _dato.strip()
 
-    while not validador(dato):
-        dato = input(f"Error. Por favor ingrese un/a/os {_tipo} válido/a/s: ").strip()
-    return dato
+        while not validador(dato):
+            dato = input(f"Error. Por favor ingrese un/a/os {_tipo} válido/a/s: ").strip()
+        return dato
+    except Exception as e:
+        print(f"Error inesperado en la validación del dato: {e}")
+        return ""
 
 def cargarArchivo(_direccion):
     """
@@ -193,10 +223,13 @@ def cargarArchivo(_direccion):
     Retorno:
         dict: Contenido del JSON.
     """
-    archivo = open(_direccion, mode="r", encoding="utf-8")
-    diccionario = json.load(archivo)
-    archivo.close()
-    return diccionario
+    try:
+        archivo = open(_direccion, mode="r", encoding="utf-8")
+        diccionario = json.load(archivo)
+        archivo.close()
+        return diccionario
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 def escribirArchivo(_direccion, _diccionario):
     """
@@ -209,9 +242,12 @@ def escribirArchivo(_direccion, _diccionario):
     Retorno:
         None
     """
-    archivo = open(_direccion, mode="w", encoding="utf-8")
-    json.dump(_diccionario, archivo, ensure_ascii=False, indent=4)
-    archivo.close()
+    try:
+        archivo = open(_direccion, mode="w", encoding="utf-8")
+        json.dump(_diccionario, archivo, ensure_ascii=False, indent=4)
+        archivo.close()
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
 
 def pedirYValidarId(_diccionario, _tipo, _validarExistente, _validacion):
     """
@@ -226,28 +262,32 @@ def pedirYValidarId(_diccionario, _tipo, _validarExistente, _validacion):
     Retorno:
         str/None: ID validado (en mayúsculas) o None si el usuario ingresa '0' para volver.
     """
-    id = validarDato(input(f"Ingrese el ID del {_tipo}: "), "id", _validacion).strip().upper()
-        
-    if _validarExistente:
-        while id not in _diccionario or not _diccionario[id]["activo"]:
-            print(f"Error: el ID del {_tipo} no existe o está inactivo.")
-            entrada = input(f"Por favor, ingrese el ID del {_tipo} (0 para volver): ").strip().upper()
-            if entrada == "0":
-                return
-            else:
-                id = validarDato(entrada, "id", _validacion).upper()
+    try:
+        id = validarDato(input(f"Ingrese el ID del {_tipo}: "), "id", _validacion).strip().upper()
+            
+        if _validarExistente:
+            while id not in _diccionario or not _diccionario[id]["activo"]:
+                print(f"Error: el ID del {_tipo} no existe o está inactivo.")
+                entrada = input(f"Por favor, ingrese el ID del {_tipo} (0 para volver): ").strip().upper()
+                if entrada == "0":
+                    return
+                else:
+                    id = validarDato(entrada, "id", _validacion).upper()
 
-        return id
-    else:
-        while id in _diccionario:
-            print(f"Error: el ID del {_tipo} que ingresó ya existe.")
-            entrada = input(f"Por favor ingrese un nuevo ID del {_tipo} (0 para volver): ").strip().upper()
-            if entrada == "0":
-                return
-            else:
-                id = validarDato(entrada, "id", _validacion).upper()
+            return id
+        else:
+            while id in _diccionario:
+                print(f"Error: el ID del {_tipo} que ingresó ya existe.")
+                entrada = input(f"Por favor ingrese un nuevo ID del {_tipo} (0 para volver): ").strip().upper()
+                if entrada == "0":
+                    return
+                else:
+                    id = validarDato(entrada, "id", _validacion).upper()
 
-        return id
+            return id
+    except Exception as e:
+        print(f"Error inesperado en el pedido y validación de ID: {e}")
+        return ""
 
 
 def ingresarAlumno():
@@ -284,6 +324,8 @@ def ingresarAlumno():
         print(f"Alumno {idAlumno} registrado correctamente.")
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al ingresar alumno: {e}")
 
 
 def modificarAlumno():
@@ -328,6 +370,8 @@ def modificarAlumno():
 
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al modificar alumno: {e}")
 
 
 def inactivarAlumno():
@@ -346,6 +390,8 @@ def inactivarAlumno():
 
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al inactivar alumno: {e}")
 
 
 def listarAlumnos():
@@ -382,6 +428,8 @@ def listarAlumnos():
             print("No hay alumnos activos registrados.")
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al listar alumnos: {e}")
 
 
 def ingresarLibro():
@@ -424,6 +472,8 @@ def ingresarLibro():
         print("Libro ingresado correctamente.")
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al ingresar libro: {e}")
 
 
 def modificarLibro():
@@ -477,6 +527,8 @@ def modificarLibro():
         print(f"Modificación del campo {campo} exitosa")
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al modificar libro: {e}")
 
 
 def inactivarLibro():
@@ -495,6 +547,8 @@ def inactivarLibro():
 
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al inactivar libro: {e}")
 
 
 def listarLibros():
@@ -528,6 +582,8 @@ def listarLibros():
             print("No hay libros activos registrados.")
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al listar libros: {e}")
 
 
 def registrarPrestamo():
@@ -564,6 +620,8 @@ def registrarPrestamo():
         print(f"Préstamo con ID: {idPrestamo} registrado exitosamente.")
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al registrar préstamo: {e}")
 
 
 def finalizarPrestamo():
@@ -620,6 +678,8 @@ def finalizarPrestamo():
         print(f"Total a pagar : {montoTotal}\n")
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al finalizar préstamo: {e}")
 
 
 def imprimirResumenMensual():
@@ -654,6 +714,8 @@ def imprimirResumenMensual():
         print("\n".join(salida))
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al imprimir resumen mensual: {e}")
 
 
 def imprimirResumenAnualPorLibroCantidad():
@@ -685,6 +747,8 @@ def imprimirResumenAnualPorLibroCantidad():
         print(informe)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al imprimir resumen anual de reservas por libro: {e}")
 
 
 def imprimirResumenAnualPorLibroPesos():
@@ -715,6 +779,8 @@ def imprimirResumenAnualPorLibroPesos():
         print(informe)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al imprimir resumen anual por libro: {e}")
 
 
 def imprimirResumenAnualDevolucionesIncorrectas():
@@ -776,6 +842,8 @@ def imprimirResumenAnualDevolucionesIncorrectas():
         print("\n".join(salida))
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al imprimir resumen anual de devoluciones incorrectas: {e}")
 
 
 def formatearInformes(_diccionario, _anio, _titulo, _esDinero=False):
@@ -791,49 +859,52 @@ def formatearInformes(_diccionario, _anio, _titulo, _esDinero=False):
     Retorno:
         str: Cadena formateada con encabezados, filas alineadas y totales por mes.
     """
+    try:
+        _anio = int(_anio)
+        anchoNombre = 50
+        anchoMes = 10
+        totalColumnas = anchoNombre + (12 * anchoMes)
 
-    _anio = int(_anio)
-    anchoNombre = 50
-    anchoMes = 10
-    totalColumnas = anchoNombre + (12 * anchoMes)
+        meses = [
+            "ENE",
+            "FEB",
+            "MAR",
+            "ABR",
+            "MAY",
+            "JUN",
+            "JUL",
+            "AGO",
+            "SEP",
+            "OCT",
+            "NOV",
+            "DIC",
+        ]
 
-    meses = [
-        "ENE",
-        "FEB",
-        "MAR",
-        "ABR",
-        "MAY",
-        "JUN",
-        "JUL",
-        "AGO",
-        "SEP",
-        "OCT",
-        "NOV",
-        "DIC",
-    ]
+        salida = []
+        salida.append("-" * totalColumnas)
+        salida.append(_titulo.center(totalColumnas))
+        salida.append("-" * totalColumnas)
 
-    salida = []
-    salida.append("-" * totalColumnas)
-    salida.append(_titulo.center(totalColumnas))
-    salida.append("-" * totalColumnas)
+        encabezado = f"{'Libros':<{anchoNombre}}"
+        for mes in meses:
+            encabezado += f"{mes}.{_anio % 100:02d}".rjust(anchoMes)
+        salida.append(encabezado)
+        salida.append("-" * totalColumnas)
 
-    encabezado = f"{'Libros':<{anchoNombre}}"
-    for mes in meses:
-        encabezado += f"{mes}.{_anio % 100:02d}".rjust(anchoMes)
-    salida.append(encabezado)
-    salida.append("-" * totalColumnas)
+        for libro, valores in _diccionario.items():
+            fila = f"{libro:<{anchoNombre}}"
+            for val in valores:
+                if val == 0:
+                    fila += f"{'':>{anchoMes}}"
+                else:
+                    fila += f"{'$' + format(val, '.2f'):>{anchoMes}}" if _esDinero else f"{val:>{anchoMes}}"
+            salida.append(fila)
 
-    for libro, valores in _diccionario.items():
-        fila = f"{libro:<{anchoNombre}}"
-        for val in valores:
-            if val == 0:
-                fila += f"{'':>{anchoMes}}"
-            else:
-                fila += f"{'$' + format(val, '.2f'):>{anchoMes}}" if _esDinero else f"{val:>{anchoMes}}"
-        salida.append(fila)
-
-    salida.append("-" * totalColumnas)
-    return "\n".join(salida)
+        salida.append("-" * totalColumnas)
+        return "\n".join(salida)
+    except Exception as e:
+        print(f"Error inesperado al formatear informe: {e}")
+        return ""
 
 # ----------------------------------------------------------------------------------------------
 # CUERPO PRINCIPAL
