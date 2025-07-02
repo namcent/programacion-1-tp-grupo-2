@@ -27,33 +27,66 @@ PRESTAMOS_ARCHIVO = "prestamos.json"
 # ----------------------------------------------------------------------------------------------
 # FUNCIONES
 # ----------------------------------------------------------------------------------------------
-def esEmailValido(dato):
-    if dato is None or dato.strip() == "":
+def esEmailValido(_dato):
+    """
+    Valida si una cadena cumple el formato de email.
+
+    Parámetros:
+        _dato (str): Cadena a validar como email.
+
+    Retorno:
+        bool: True si cumple, False en caso contrario.
+    """
+    if _dato is None or _dato.strip() == "":
         return False
     pat = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-    return re.match(pat, dato) is not None
+    return re.match(pat, _dato) is not None
 
-def esNumeroValido(dato):
-    if dato is None or dato.strip() == "":
+def esNumeroValido(_dato):
+    """
+    Valida si una cadena es un número entero.
+
+    Parámetros:
+        _dato (str): Cadena a validar como número.
+
+    Retorno:
+        bool: True si puede convertirse a entero, False en caso contrario.
+    """
+    if _dato is None or _dato.strip() == "":
         return False
 
     try:
-        int(dato)
+        int(_dato)
         return True
     except ValueError:
         return False
 
-def esIdValido(dato):
+def esIdValido(_dato):
     """
-    ID válido: una letra (mayúscula o minúscula) seguida de al menos un dígito. Permite mayúsculas y minúsculas.
+    Valida que una cadena empiece con una letra (mayúscula o minúscula) seguida de al menos un dígito.
+
+    Parámetros:
+        _dato (str): Cadena a validar como ID.
+
+    Retorno:
+        bool: True si cumple el patrón, False en caso contrario.
     """
-    if dato is None or dato.strip() == "":
+    if _dato is None or _dato.strip() == "":
         return False
     patron = r"^[A-Za-z]\d+$"
-    return re.match(patron, dato) is not None
+    return re.match(patron, _dato) is not None
 
-def esIdPrestamoValido(dato):
-    if dato is None or dato.strip() == "":
+def esIdPrestamoValido(_dato):
+    """
+    Valida que una cadena tenga formato 'YYYY.MM.DD HH:MM:SS'.
+
+    Parámetros:
+        _dato (str): Cadena a validar como ID de préstamo.
+
+    Retorno:
+        bool: True si coincide con el patrón de fecha y hora, False en caso contrario.
+    """
+    if _dato is None or _dato.strip() == "":
         return False
 
     patron = (
@@ -64,19 +97,34 @@ def esIdPrestamoValido(dato):
         r"[0-5]\d:"                       # Minuto
         r"[0-5]\d$"                       # Segundo
     )
-    return re.match(patron, dato) is not None
+    return re.match(patron, _dato) is not None
 
-def esDireccionValida(dato):
+def esDireccionValida(_dato):
     """
-    Permite letras (incluye tildes y ñ), números y espacios.
+    Valida que una dirección solo contenga letras, números, puntos y espacios.
+
+    Parámetros:
+        _dato (str): Cadena a validar como dirección.
+
+    Retorno:
+        bool: True si cumple, False en caso contrario.
     """
-    if dato is None or dato.strip() == "":
+    if _dato is None or _dato.strip() == "":
         return False
     patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+)*$"
-    return re.match(patron, dato) is not None
+    return re.match(patron, _dato) is not None
 
-def sonAutoresValidos(dato):
-    if dato is None or dato.strip() == "":
+def sonAutoresValidos(_dato):
+    """
+    Valida que una cadena contenga letras (hasta tres) separados por comas.
+
+    Parámetros:
+        _dato (str): Cadena a validar.
+
+    Retorno:
+        bool: True si hay entre 1 y 3 cadenas de letras válidas separadas por comas, False en caso contrario.
+    """
+    if _dato is None or _dato.strip() == "":
         return False
     patrón = (
         r'^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
@@ -84,82 +132,128 @@ def sonAutoresValidos(dato):
         r'(?:\s*,\s*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
         r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*)*$'
     )
-    return re.match(patrón, dato) is not None
+    return re.match(patrón, _dato) is not None
 
-def esStringValido(dato):
-    if dato is None or dato.strip() == "":
+def esStringValido(_dato):
+    """
+    Valida que una cadena solo contenga letras (incluye tildes y ñ) y espacios.
+
+    Parámetros:
+        _dato (str): Cadena a validar.
+
+    Retorno:
+        bool: True si cumple, False en caso contrario.
+    """
+    if _dato is None or _dato.strip() == "":
         return False
     
     patron = r"^[A-Za-zÁÉÍÓÚáéíóúÑñ]+(?: [A-Za-zÁÉÍÓÚáéíóúÑñ]+)*$"
-    return re.match(patron, dato) is not None
+    return re.match(patron, _dato) is not None
 
-def validarDato(dato, tipo, validacion):
-    if validacion == "email":
+def validarDato(_dato, _tipo, _validacion):
+    """
+    Pide al usuario un dato hasta que pase la validación indicada.
+
+    Parámetros:
+        _dato (str): Valor inicial ingresado.
+        _tipo (str): Nombre para el mensaje de error (p.ej. "email", "id").
+        _validacion (str): Tipo de validación ("email", "numero", "id", "idPrestamo", "direccion", "autores" o por defecto "string").
+
+    Retorno:
+        str: Valor validado y formateado (strip/upper) que cumple la validación.
+    """
+    if _validacion == "email":
         validador = esEmailValido
-    elif validacion == "numero":
+    elif _validacion == "numero":
         validador = esNumeroValido
-    elif validacion == "id":
+    elif _validacion == "id":
         validador = esIdValido
-    elif validacion == "idPrestamo":
+    elif _validacion == "idPrestamo":
         validador = esIdPrestamoValido
-    elif validacion == "direccion":
+    elif _validacion == "direccion":
         validador = esDireccionValida
-    elif validacion == "autores":
+    elif _validacion == "autores":
         validador = sonAutoresValidos
     else:
         validador = esStringValido
 
-    dato = dato.strip()
+    dato = _dato.strip()
 
     while not validador(dato):
-        dato = input(f"Error. Por favor ingrese un/a/os {tipo} válido/a/s: ").strip()
+        dato = input(f"Error. Por favor ingrese un/a/os {_tipo} válido/a/s: ").strip()
     return dato
 
-def cargarArchivo(direccion):
-    archivo = open(direccion, mode="r", encoding="utf-8")
+def cargarArchivo(_direccion):
+    """
+    Carga un archivo JSON y devuelve su contenido como diccionario.
+
+    Parámetros:
+        _direccion (str): Ruta del archivo JSON.
+
+    Retorno:
+        dict: Contenido del JSON.
+    """
+    archivo = open(_direccion, mode="r", encoding="utf-8")
     diccionario = json.load(archivo)
     archivo.close()
     return diccionario
 
-def escribirArchivo(direccion, diccionario):
-    archivo = open(direccion, mode="w", encoding="utf-8")
-    json.dump(diccionario, archivo, ensure_ascii=False, indent=4)
+def escribirArchivo(_direccion, _diccionario):
+    """
+    Escribe un diccionario en un archivo JSON.
+
+    Parámetros:
+        _direccion (str): Ruta del archivo JSON.
+        _diccionario (dict): Diccionario a escribir.
+
+    Retorno:
+        None
+    """
+    archivo = open(_direccion, mode="w", encoding="utf-8")
+    json.dump(_diccionario, archivo, ensure_ascii=False, indent=4)
     archivo.close()
 
-def pedirYValidarId(diccionario, tipo, validarExistente, validacion):
-    id = validarDato(input(f"Ingrese el ID del {tipo}: "), "id", validacion).strip().upper()
+def pedirYValidarId(_diccionario, _tipo, _validarExistente, _validacion):
+    """
+    Solicita un ID y valida su existencia o inexistencia según lo que se ingrese como parámetro.
+
+    Parámetros:
+        _diccionario (dict): Diccionario donde buscar la existencia o inexistencia de un valor.
+        _tipo (str): Nombre para el mensaje de error (p.ej. "alumno", "libro").
+        _validarExistente (bool): True si el ID debe existir y estar activo, False si debe ser nuevo.
+        _validacion (str): Tipo de validación para el ID ("id" o "idPrestamo").
+
+    Retorno:
+        str/None: ID validado (en mayúsculas) o None si el usuario ingresa '0' para volver.
+    """
+    id = validarDato(input(f"Ingrese el ID del {_tipo}: "), "id", _validacion).strip().upper()
         
-    if validarExistente:
-        while id not in diccionario or not diccionario[id]["activo"]:
-            print(f"Error: el ID del {tipo} no existe o está inactivo.")
-            entrada = input(f"Por favor, ingrese el ID del {tipo} (0 para volver): ").strip().upper()
+    if _validarExistente:
+        while id not in _diccionario or not _diccionario[id]["activo"]:
+            print(f"Error: el ID del {_tipo} no existe o está inactivo.")
+            entrada = input(f"Por favor, ingrese el ID del {_tipo} (0 para volver): ").strip().upper()
             if entrada == "0":
                 return
             else:
-                id = validarDato(entrada, "id", validacion).upper()
+                id = validarDato(entrada, "id", _validacion).upper()
 
         return id
     else:
-        while id in diccionario:
-            print(f"Error: el ID del {tipo} que ingresó ya existe.")
-            entrada = input(f"Por favor ingrese un nuevo ID del {tipo} (0 para volver): ").strip().upper()
+        while id in _diccionario:
+            print(f"Error: el ID del {_tipo} que ingresó ya existe.")
+            entrada = input(f"Por favor ingrese un nuevo ID del {_tipo} (0 para volver): ").strip().upper()
             if entrada == "0":
                 return
             else:
-                id = validarDato(entrada, "id", validacion).upper()
+                id = validarDato(entrada, "id", _validacion).upper()
 
         return id
 
 
 def ingresarAlumno():
     """
-    Registra un nuevo alumno en el diccionario de alumnos.
-
-    Parámetros:
-        _alumnos (dict): Diccionario de alumnos (clave: idAlumno).
-
-    Retorno:
-        _alumnos (dict): Diccionario de alumnos actualizado con la nueva entrada.
+    Registra un nuevo alumno. Solicita sus datos, lo registra en el archivo JSON y confirma su 
+    creación.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -194,14 +288,8 @@ def ingresarAlumno():
 
 def modificarAlumno():
     """
-    Modifica los datos básicos de un alumno existente.
-
-    Parámetros:
-        _alumnos (dict): Diccionario de alumnos (clave: idAlumno).
-
-    Retorno:
-        _alumnos (dict): Diccionario de alumnos con los cambios aplicados
-        (o sin cambios si el ID no se encontró).
+    Modifica los datos de un alumno existente. Permite cambiar uno de los campos de un alumno existente 
+    identificado por ID.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -244,14 +332,7 @@ def modificarAlumno():
 
 def inactivarAlumno():
     """
-    Inactiva (baja lógica) a un alumno a partir de su ID.
-
-    Parámetros:
-        _alumnos (dict): Diccionario de alumnos (clave: idAlumno).
-
-    Retorno:
-        _alumnos (dict): Diccionario de alumnos con el estado del alumno
-        actualizado a inactivo si el ID existe.
+    Marca como inactivo a un alumno existente (baja lógica) identificado por ID.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -269,13 +350,7 @@ def inactivarAlumno():
 
 def listarAlumnos():
     """
-    Muestra el listado de alumnos activos y sus datos.
-
-    Parámetros:
-        _alumnos (dict): Diccionario de alumnos (clave: idAlumno).
-
-    Retorno:
-        _alumnos (dict): El mismo diccionario recibido, sin modificar.
+    Imprime por consola el listado de alumnos activos y sus datos.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -311,13 +386,7 @@ def listarAlumnos():
 
 def ingresarLibro():
     """
-    Registra un nuevo libro en el diccionario de libros.
-
-    Parámetros:
-        _libros (dict): Diccionario de libros (clave: idLibro).
-
-    Retorno:
-        _libros (dict): Diccionario de libros actualizado con la nueva entrada.
+    Registra un nuevo libro. Solicita los datos del nuevo libro, lo registra en el JSON y confirma su creación.
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
@@ -359,14 +428,8 @@ def ingresarLibro():
 
 def modificarLibro():
     """
-    Modifica los datos básicos de un libro existente.
-
-    Parámetros:
-        _libros (dict): Diccionario de libros (clave: idLibro).
-
-    Retorno:
-        _libros (dict): Diccionario de libros con los cambios aplicados
-        (o sin cambios si el ID no se encontró).
+    Modifica los datos de un libro existente. Permite cambiar uno de los campos de un libro existente 
+    identificado por ID.
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
@@ -418,14 +481,7 @@ def modificarLibro():
 
 def inactivarLibro():
     """
-    Marca un libro como inactivo (baja lógica) a partir de su ID.
-
-    Parámetros:
-        _libros (dict): Diccionario de libros (clave: idLibro).
-
-    Retorno:
-        _libros (dict): Diccionario de libros con el estado del libro
-        actualizado a inactivo si el ID existe.
+    Marca como inactivo a un libro existente (baja lógica) identificado por ID.
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
@@ -443,13 +499,7 @@ def inactivarLibro():
 
 def listarLibros():
     """
-    Muestra el listado completo de libros y sus datos.
-
-    Parámetros:
-        _libros (dict): Diccionario de libros (clave: idLibro).
-
-    Retorno:
-        _libros (dict): El mismo diccionario recibido, sin modificar.
+    Imprime por consola el listado completo de libros y sus datos.
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
@@ -482,15 +532,8 @@ def listarLibros():
 
 def registrarPrestamo():
     """
-    Registra un nuevo préstamo y lo agrega al diccionario de préstamos.
-
-    Parámetros:
-        _alumnos (dict): Diccionario de alumnos (clave: idAlumno, valor: datos del alumno).
-        _libros (dict): Diccionario de libros  (clave: idLibro,  valor: datos del libro).
-        _prestamos (dict): Diccionario de préstamos (clave: idPrestamo).
-
-    Retorno:
-        _prestamos (dict): Diccionario de préstamos actualizado con la nueva operación.
+    Registra un nuevo préstamo con ID automático de fecha/hora para alumno y libro válidos y lo 
+    agrega al archivo préstamos.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -525,16 +568,8 @@ def registrarPrestamo():
 
 def finalizarPrestamo():
     """
-    Finaliza un préstamo, registra la devolución, calcula el monto y actualiza infracciones.
-
-    Parámetros:
-        _alumnos (dict): Diccionario de alumnos (clave: idAlumno, valor: datos del alumno).
-        _libros (dict): Diccionario de libros  (clave: idLibro,  valor: datos del libro).
-        _prestamos (dict): Diccionario de préstamos (clave: idPrestamo).
-
-    Retorno:
-        _prestamos (dict): Diccionario de préstamos con los datos del préstamo cerrado.
-        _alumnos (dict): Diccionario de alumnos (modificado si se suma infracción).
+    Finaliza un préstamo, registra la devolución, calcula el monto y actualiza infracciones. 
+    Guarda los datos actualizados en los archivos correspondientes.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -587,19 +622,9 @@ def finalizarPrestamo():
         print("Error al intentar abrir archivo(s):", detalle)
 
 
-def resumenMensual():
+def imprimirResumenMensual():
     """
-    Genera un resumen de los préstamos realizados en un mes específico.
-
-    Parámetros:
-        _prestamos (dict): Diccionario de préstamos (clave: idPrestamo, valor: datos del préstamo).
-        _alumnos (dict): Diccionario de alumnos (clave: idAlumno, valor: datos del alumno).
-        _libros (dict): Diccionario de libros  (clave: idLibro,  valor: datos del libro).
-        _anio (int): Año del cual se desea obtener el resumen.
-        _mes (int): Mes (1 a 12) del cual se desea obtener el resumen.
-
-    Retorno:
-        str: texto formateado con el resumen mensual de préstamos realizados en un mes.
+    Solicita un año y mes e imprime por consola el listado de préstamos iniciados en ese periodo.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -626,22 +651,14 @@ def resumenMensual():
                 tituloLibro = libros.get(idLibro, {}).get("titulo", f"Libro {idLibro}")
                 salida.append(f"{fechaHora:<35}{nombreAlumno:<35}{tituloLibro:<35}")
 
-        return "\n".join(salida)
+        print("\n".join(salida))
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
 
 
-def resumenAnualPorLibroCantidad():
+def imprimirResumenAnualPorLibroCantidad():
     """
-    Genera un resumen anual con la cantidad de préstamos por libro.
-
-    Parámetros:
-        _prestamos (dict): Diccionario de préstamos (clave: idPrestamo, valor: datos del préstamo).
-        _anio (int): Año para el cual se desea generar el resumen.
-        _libros (dict): Diccionario de préstamos (clave: idLibro, valor: datos del libro).
-
-    Retorno:
-        str: texto formateado con las reservas mensuales de libros.
+    Solicita un año e imprime por consola cuántos préstamos tuvo cada libro mes a mes.
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
@@ -664,24 +681,15 @@ def resumenAnualPorLibroCantidad():
             for idLibro, valores in resumen.items()
         }
 
-        return formateoInformes(
-            resumenPorTitulo, anio, "Resumen Anual de Reservas por Libro (Cantidades)"
-        )
+        informe = formatearInformes(resumenPorTitulo, anio, "Resumen Anual de Reservas por Libro (Cantidades)")
+        print(informe)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
 
 
-def resumenAnualPorLibroPesos():
+def imprimirResumenAnualPorLibroPesos():
     """
-    Genera un resumen anual del dinero en garantía movido por libro.
-
-    Parámetros:
-        _prestamos (dict): Diccionario de préstamos (clave: idPrestamo, valor: datos del préstamo).
-        _libros (dict): Diccionario con información de libros (clave: idLibro, valor: datos del libro).
-        _anio (int): Año para el cual se desea generar el resumen.
-
-    Retorno:
-        str: texto formateado con el monto acumulado mensualmente por libro.
+    Solicita un año e imprime por consola el resumen anual del dinero en garantía movido por libro.
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
@@ -703,26 +711,15 @@ def resumenAnualPorLibroPesos():
                     resumen[nombreLibro] = [0] * 12
                 resumen[nombreLibro][mes] += costo
 
-        return formateoInformes(
-            resumen,
-            anio,
-            "Resumen Anual de Reservas por Libro (Pesos)",
-            _esDinero=True,
-        )
+        informe = formatearInformes(resumen, anio, "Resumen Anual de Reservas por Libro (Pesos)", _esDinero=True)
+        print(informe)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
 
 
-def resumenAnualDevolucionesIncorrectas():
+def imprimirResumenAnualDevolucionesIncorrectas():
     """
-    Genera el resumen anual de devoluciones incorrectas por mes.
-
-    Parámetros:
-        prestamos (dict): diccionario de préstamos.
-        anio (int): año a filtrar.
-
-    Retorno:
-        str: texto formateado con devoluciones incorrectas por mes.
+    Solicita un año e imprime por consola el resumen anual de devoluciones incorrectas por mes.
     """
     try:
         prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
@@ -776,12 +773,12 @@ def resumenAnualDevolucionesIncorrectas():
 
         salida.append("-" * anchoTotal)
 
-        return "\n".join(salida)
+        print("\n".join(salida))
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
 
 
-def formateoInformes(_diccionario, _anio, _titulo, _esDinero=False):
+def formatearInformes(_diccionario, _anio, _titulo, _esDinero=False):
     """
     Formatea un informe anual en forma de tabla con columnas mensuales.
 
@@ -1312,16 +1309,16 @@ def main():
                     break  # No sale del programa, sino que vuelve al menú anterior
 
                 elif opcionSubmenu == "1":  # Opción 1 del submenú
-                    print(resumenMensual())
+                    imprimirResumenMensual()
 
                 elif opcionSubmenu == "2":  # Opción 2 del submenú
-                    print(resumenAnualPorLibroCantidad())
+                    imprimirResumenAnualPorLibroCantidad()
 
                 elif opcionSubmenu == "3":  # Opción 3 del submenú
-                    print(resumenAnualPorLibroPesos())
+                    imprimirResumenAnualPorLibroPesos()
 
                 elif opcionSubmenu == "4":  # Opción 4 del submenú
-                    print(resumenAnualDevolucionesIncorrectas())
+                    imprimirResumenAnualDevolucionesIncorrectas()
 
                     input("\nPresione ENTER para volver al menú.")
                     print("\n\n")
