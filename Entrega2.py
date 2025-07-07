@@ -642,6 +642,66 @@ def listarRegistros(_ruta, _etiqueta, _esquema):
         print(f"Error inesperado al listar registros: {e}")
         return None
 
+def formatearInformes(_diccionario, _anio, _titulo, _esDinero=False):
+    """
+    Formatea un informe anual en forma de tabla con columnas mensuales.
+
+    Parámetros:
+        _diccionario (dict): Diccionario donde las claves son los nombres y los valores son listas con 12 números (uno por mes).
+        _anio (int o str): Año del informe.
+        _titulo (str): Título centrado que aparecerá en la parte superior del informe.
+        _esDinero (bool): Si es True, los valores se muestran con signo '$' y dos decimales.
+
+    Retorno:
+        str: Cadena formateada con encabezados, filas alineadas y totales por mes, o cadena vacía en caso de excepción.
+    """
+    try:
+        _anio = int(_anio)
+        anchoNombre = 50
+        anchoMes = 10
+        totalColumnas = anchoNombre + (12 * anchoMes)
+
+        meses = [
+            "ENE",
+            "FEB",
+            "MAR",
+            "ABR",
+            "MAY",
+            "JUN",
+            "JUL",
+            "AGO",
+            "SEP",
+            "OCT",
+            "NOV",
+            "DIC",
+        ]
+
+        salida = []
+        salida.append("-" * totalColumnas)
+        salida.append(_titulo.center(totalColumnas))
+        salida.append("-" * totalColumnas)
+
+        encabezado = f"{'Libros':<{anchoNombre}}"
+        for mes in meses:
+            encabezado += f"{mes}.{_anio % 100:02d}".rjust(anchoMes)
+        salida.append(encabezado)
+        salida.append("-" * totalColumnas)
+
+        for libro, valores in _diccionario.items():
+            fila = f"{libro:<{anchoNombre}}"
+            for val in valores:
+                if val == 0:
+                    fila += f"{'':>{anchoMes}}"
+                else:
+                    fila += f"{'$' + format(val, '.2f'):>{anchoMes}}" if _esDinero else f"{val:>{anchoMes}}"
+            salida.append(fila)
+
+        salida.append("-" * totalColumnas)
+        return "\n".join(salida)
+    except Exception as e:
+        print(f"Error inesperado al formatear informe: {e}")
+        return ""
+
 def ingresarAlumno():
     """
     Registra un nuevo alumno. Permite crear un nuevo registro a partir del esquema correspondiente, 
@@ -659,7 +719,6 @@ def ingresarAlumno():
     except Exception as e:
         print(f"Error inesperado al ingresar alumno: {e}")
         return None
-
 
 def modificarAlumno():
     """
@@ -679,7 +738,6 @@ def modificarAlumno():
         print(f"Error inesperado al modificar alumno: {e}")
         return None
 
-
 def inactivarAlumno():
     """
     Marca como inactivo a un alumno existente (baja lógica) identificado por ID.
@@ -696,7 +754,6 @@ def inactivarAlumno():
     except Exception as e:
         print(f"Error inesperado al inactivar alumno: {e}")
         return None
-
 
 def listarAlumnos():
     """
@@ -721,7 +778,6 @@ def listarAlumnos():
         print(f"Error inesperado al listar alumnos: {e}")
         return None
 
-
 def ingresarLibro():
     """
     Registra un nuevo libro. Permite crear un nuevo registro a partir del esquema correspondiente, 
@@ -739,7 +795,6 @@ def ingresarLibro():
     except Exception as e:
         print(f"Error inesperado al ingresar libro: {e}")
         return None
-
 
 def modificarLibro():
     """
@@ -759,7 +814,6 @@ def modificarLibro():
         print(f"Error inesperado al modificar libro: {e}")
         return None
 
-
 def inactivarLibro():
     """
     Marca como inactivo a un libro existente (baja lógica) identificado por ID.
@@ -776,7 +830,6 @@ def inactivarLibro():
     except Exception as e:
         print(f"Error inesperado al inactivar libro: {e}")
         return None
-
 
 def listarLibros():
     """
@@ -810,7 +863,6 @@ def listarLibros():
     except Exception as e:
         print(f"Error inesperado al listar libros: {e}")
         return None
-
 
 def registrarPrestamo():
     """
@@ -861,7 +913,6 @@ def registrarPrestamo():
     except Exception as e:
         print(f"Error inesperado al registrar préstamo: {e}")
         return None
-
 
 def finalizarPrestamo():
     """
@@ -936,7 +987,6 @@ def finalizarPrestamo():
         print(f"Error inesperado al finalizar préstamo: {e}")
         return None
 
-
 def imprimirResumenMensual():
     """
     Solicita un año y mes e imprime por consola el listado de préstamos iniciados en ese periodo.
@@ -983,7 +1033,6 @@ def imprimirResumenMensual():
         print(f"Error inesperado al imprimir resumen mensual: {e}")
         return None
 
-
 def imprimirResumenAnualPorLibroCantidad():
     """
     Solicita un año e imprime por consola cuántos préstamos tuvo cada libro mes a mes.
@@ -1028,7 +1077,6 @@ def imprimirResumenAnualPorLibroCantidad():
         print(f"Error inesperado al imprimir resumen anual de reservas por libro: {e}")
         return None
 
-
 def imprimirResumenAnualPorLibroPesos():
     """
     Solicita un año e imprime por consola el resumen anual del dinero en garantía movido por libro.
@@ -1069,7 +1117,6 @@ def imprimirResumenAnualPorLibroPesos():
     except Exception as e:
         print(f"Error inesperado al imprimir resumen anual por libro: {e}")
         return None
-
 
 def imprimirResumenAnualDevolucionesIncorrectas():
     """
@@ -1143,67 +1190,6 @@ def imprimirResumenAnualDevolucionesIncorrectas():
     except Exception as e:
         print(f"Error inesperado al imprimir resumen anual de devoluciones incorrectas: {e}")
         return None
-
-
-def formatearInformes(_diccionario, _anio, _titulo, _esDinero=False):
-    """
-    Formatea un informe anual en forma de tabla con columnas mensuales.
-
-    Parámetros:
-        _diccionario (dict): Diccionario donde las claves son los nombres y los valores son listas con 12 números (uno por mes).
-        _anio (int o str): Año del informe.
-        _titulo (str): Título centrado que aparecerá en la parte superior del informe.
-        _esDinero (bool): Si es True, los valores se muestran con signo '$' y dos decimales.
-
-    Retorno:
-        str: Cadena formateada con encabezados, filas alineadas y totales por mes, o cadena vacía en caso de excepción.
-    """
-    try:
-        _anio = int(_anio)
-        anchoNombre = 50
-        anchoMes = 10
-        totalColumnas = anchoNombre + (12 * anchoMes)
-
-        meses = [
-            "ENE",
-            "FEB",
-            "MAR",
-            "ABR",
-            "MAY",
-            "JUN",
-            "JUL",
-            "AGO",
-            "SEP",
-            "OCT",
-            "NOV",
-            "DIC",
-        ]
-
-        salida = []
-        salida.append("-" * totalColumnas)
-        salida.append(_titulo.center(totalColumnas))
-        salida.append("-" * totalColumnas)
-
-        encabezado = f"{'Libros':<{anchoNombre}}"
-        for mes in meses:
-            encabezado += f"{mes}.{_anio % 100:02d}".rjust(anchoMes)
-        salida.append(encabezado)
-        salida.append("-" * totalColumnas)
-
-        for libro, valores in _diccionario.items():
-            fila = f"{libro:<{anchoNombre}}"
-            for val in valores:
-                if val == 0:
-                    fila += f"{'':>{anchoMes}}"
-                else:
-                    fila += f"{'$' + format(val, '.2f'):>{anchoMes}}" if _esDinero else f"{val:>{anchoMes}}"
-            salida.append(fila)
-
-        salida.append("-" * totalColumnas)
-        return "\n".join(salida)
-    except Exception as e:
-        print(f"Error inesperado al formatear informe: {e}")
-        return ""
 
 # ----------------------------------------------------------------------------------------------
 # CUERPO PRINCIPAL
