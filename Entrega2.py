@@ -19,6 +19,9 @@ from datetime import datetime
 import json
 import re
 
+# ----------------------------------------------------------------------------------------------
+# CONSTANTES
+# ----------------------------------------------------------------------------------------------
 ALUMNOS_ARCHIVO = "alumnos.json"
 LIBROS_ARCHIVO = "libros.json"
 PRESTAMOS_ARCHIVO = "prestamos.json"
@@ -62,10 +65,10 @@ def esEmailValido(_dato):
         if _dato is None or _dato.strip() == "":
             return False
         pat = (
-            r"^[A-Za-z0-9_.+-]+"   # Usuario: letras, números y caracteres . _ + -
+            r"^[a-zA-Z0-9_.+-]+"   # Usuario: letras, números y caracteres . _ + -
             r"@"                   # Símbolo @ obligatorio
-            r"[A-Za-z0-9-]+\."     # Dominio: letras, números, guiones y punto
-            r"[A-Za-z]{2,}$"       # Extensión: al menos 2 letras al final
+            r"[a-zA-Z0-9-]+\."     # Dominio: letras, números, guiones y punto
+            r"[a-zA-Z0-9-.]+$"       # Extensión: letras, números, guiones y punto
         )
         return re.match(pat, _dato) is not None
     except Exception as e:
