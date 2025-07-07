@@ -24,8 +24,8 @@ LIBROS_ARCHIVO = "libros.json"
 PRESTAMOS_ARCHIVO = "prestamos.json"
 ALUMNO_ESQUEMA = {
     'id': 'id',
-    'campos': [
-        ('nombre', 'nombre', 'string'), # (etiqueta de campo, campo o ruta de campo, tipo de campo)
+    'campos': [ # (etiqueta de campo, campo o ruta de campo, tipo de campo)
+        ('nombre', 'nombre', 'string'), 
         ('apellido', 'apellido', 'string'),
         ('dirección', 'direccion', 'direccion'),
         ('email', 'email', 'email'),
@@ -36,8 +36,8 @@ ALUMNO_ESQUEMA = {
 
 LIBRO_ESQUEMA = {
     'id': 'id',
-    'campos': [
-        ('título', 'titulo', 'string'), # (etiqueta de campo, campo o ruta de campo, tipo de campo)
+    'campos': [ # (etiqueta de campo, campo o ruta de campo, tipo de campo)
+        ('título', 'titulo', 'string'),
         ('autores', 'autores', 'autores'),
         ('género', 'genero', 'string'),
         ('editorial', 'editorial', 'string'),
@@ -50,13 +50,13 @@ LIBRO_ESQUEMA = {
 # ----------------------------------------------------------------------------------------------
 def esEmailValido(_dato):
     """
-    Valida si una cadena cumple el formato de email, con la estructura usuario@dominio.extensión.
+    Valida si una cadena cumple el formato de email, con la estructura 'usuario@dominio.extensión'.
 
     Parámetros:
         _dato (str): Cadena a validar como email.
 
     Retorno:
-        bool: True si cumple, False en caso contrario.
+        bool: True si cumple, False en caso contrario o excepción.
     """
     try:
         if _dato is None or _dato.strip() == "":
@@ -80,14 +80,14 @@ def esNumeroValido(_dato):
         _dato (str): Cadena a validar como número.
 
     Retorno:
-        bool: True si puede convertirse a entero, False en caso contrario.
+        bool: True si puede convertirse a entero, False en caso contrario o excepción.
     """
     try:
         if _dato is None or _dato.strip() == "":
             return False
-        int(_dato) # Intentamos conversión a int. Si falla, no es válido
+        int(_dato) # Intentamos conversión a int
         return True
-    except (ValueError):
+    except (ValueError): # Si falla, no es válido
         return False
     except Exception as e:
         print(f"Error inesperado en la validación de número: {e}")
@@ -101,7 +101,7 @@ def esIdValido(_dato):
         _dato (str): Cadena a validar como ID.
 
     Retorno:
-        bool: True si cumple el patrón, False en caso contrario.
+        bool: True si cumple el patrón, False en caso contrario o excepción.
     """
     try:
         if _dato is None or _dato.strip() == "":
@@ -123,7 +123,7 @@ def esIdPrestamoValido(_dato):
         _dato (str): Cadena a validar como ID de préstamo.
 
     Retorno:
-        bool: True si coincide con el patrón de fecha y hora, False en caso contrario.
+        bool: True si coincide con el patrón de fecha y hora, False en caso contrario o excepción.
     """
     try:
         if _dato is None or _dato.strip() == "":
@@ -150,14 +150,14 @@ def esDireccionValida(_dato):
         _dato (str): Cadena a validar como dirección.
 
     Retorno:
-        bool: True si cumple, False en caso contrario.
+        bool: True si cumple, False en caso contrario o excepción.
     """
     try:
         if _dato is None or _dato.strip() == "":
             return False
         patron = (
             r"^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+"          # Primer bloque: letras, números y punto
-            r"(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+)*$"    # Bloques opcionales: espacio + mismos caracteres del primer bloque
+            r"(?: [A-Za-zÁÉÍÓÚáéíóúÑñ0-9\.]+)*$"    # Bloques opcionales: espacio + letras, números y punto
         )
         return re.match(patron, _dato) is not None
     except Exception as e:
@@ -172,7 +172,8 @@ def sonAutoresValidos(_dato):
         _dato (str): Cadena a validar.
 
     Retorno:
-        bool: True si hay entre 1 y 3 cadenas de letras válidas separadas por comas, False en caso contrario.
+        bool: True si hay entre 1 y 3 cadenas de letras válidas separadas por comas, False en 
+        caso contrario o excepción.
     """
     try:
         if _dato is None or _dato.strip() == "":
@@ -198,7 +199,7 @@ def esStringValido(_dato):
         _dato (str): Cadena a validar.
 
     Retorno:
-        bool: True si cumple, False en caso contrario.
+        bool: True si cumple, False en caso contrario o excepción.
     """
     try:
         if _dato is None or _dato.strip() == "":
@@ -221,10 +222,12 @@ def validarDato(_dato, _etiqueta, _validacion):
     Parámetros:
         _dato (str): Valor inicial ingresado.
         _etiqueta (str): Nombre para el mensaje de error (ej. "email", "id").
-        _validacion (str): Tipo de validación ("email", "numero", "id", "idPrestamo", "direccion", "autores" o por defecto "string").
+        _validacion (str): Tipo de validación ("email", "numero", "id", "idPrestamo", "direccion", 
+        "autores" o por defecto "string").
 
     Retorno:
-        str: Valor validado y formateado (strip/upper) que cumple la validación.
+        str: Valor validado y formateado (strip/upper) que cumple la validación o cadena vacía en 
+        caso de excepción.
     """
     try:
         # Selección del validador en base al tipo solicitado
@@ -262,6 +265,7 @@ def cargarArchivo(_direccion):
 
     Retorno:
         dict: Contenido del JSON.
+        None: Si hay un error al abrir o parsear el archivo.
     """
     try:
         archivo = open(_direccion, mode="r", encoding="utf-8")
@@ -270,6 +274,7 @@ def cargarArchivo(_direccion):
         return diccionario
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
 
 def escribirArchivo(_direccion, _diccionario):
     """
@@ -278,9 +283,10 @@ def escribirArchivo(_direccion, _diccionario):
     Parámetros:
         _direccion (str): Ruta del archivo JSON.
         _diccionario (dict): Diccionario a escribir.
-
+    
     Retorno:
-        None
+        None: Se escribe el archivo JSON y devuelve None. En caso de error al abrir o parsear 
+        el archivo, lo informa y devuelve None.
     """
     try:
         archivo = open(_direccion, mode="w", encoding="utf-8")
@@ -295,12 +301,12 @@ def pedirYValidarId(_diccionario, _etiqueta, _validarExistente, _validacion):
 
     Parámetros:
         _diccionario (dict): Diccionario donde buscar la existencia o inexistencia de un valor.
-        _etiqueta (str): Nombre para el mensaje de error (p.ej. "alumno", "libro").
+        _etiqueta (str): Nombre para el mensaje de error (ej. "alumno", "libro").
         _validarExistente (bool): True si el ID debe existir y estar activo, False si debe ser nuevo.
         _validacion (str): Tipo de validación para el ID ("id" o "idPrestamo").
 
     Retorno:
-        str/None: ID validado (en mayúsculas) o None si el usuario ingresa '0' para volver o se captura 
+        str|None: ID validado (en mayúsculas) o None si el usuario ingresa '0' para volver o se captura 
         una excepción.
     """
     try:
@@ -361,14 +367,15 @@ def obtenerValor(_etiqueta, _tipoDato):
     Pide al usuario el valor correspondiente a un campo y lo valida según su tipo de dato.
 
     Parámetros:
-        _campo (str): Nombre del campo a solicitar (ej. "autores", "costo", etc.).
+        _etiqueta (str): Nombre del campo a solicitar (ej. "autores", "costo", etc.).
         _tipoDato (str): Tipo de validación a aplicar ("autores", "numero", "string", "email", "direccion", etc.).
 
     Retorno:
-        dict|int|str: 
+        dict|int|str|None: 
             - Si el campo es "autores", devuelve un diccionario con las claves "autor1", "autor2" y "autor3".  
             - Si el tipo de dato es "numero", devuelve un entero.  
             - Para otros tipos, devuelve la cadena validada.
+            - Si se captura una excepción lo informa y devuelve None.
     """
     try:
         if _etiqueta == "autores":
@@ -394,6 +401,7 @@ def obtenerValor(_etiqueta, _tipoDato):
         return entrada
     except Exception as e:
         print(f"Error inesperado al obtener valor: {e}")
+        return None
 
 def asignarValorEnRegistro(_registro, _campo, _valor):
     """
@@ -403,6 +411,10 @@ def asignarValorEnRegistro(_registro, _campo, _valor):
         _registro (dict): Diccionario donde se guardará el valor.
         _campo (str): Ruta del campo, que puede incluir niveles separados por ".".
         _valor: Valor a asignar en el registro.
+
+    Retorno:
+        None: Se modifica el diccionario y devuelve None. Si se captura una excepción lo informa 
+        y devuelve None.
     """
     try:
         if "." in _campo: # Caso de ruta anidada
@@ -417,17 +429,23 @@ def asignarValorEnRegistro(_registro, _campo, _valor):
             nodo[partes[-1]] = _valor # Asigna el valor a la última clave de la ruta
         else:
             _registro[_campo] = _valor
+        return None
     except Exception as e:
         print(f"Error inesperado al asignar valor al registro: {e}")
+        return None
 
-def crearEntidad(_ruta, _etiqueta, _esquema):
+def crearRegistro(_ruta, _etiqueta, _esquema):
     """
-    Pide datos al usuario según un esquema y crea una nueva entidad en el archivo JSON.
+    Pide datos al usuario según un esquema y crea un nueva registro en el archivo JSON.
 
     Parámetros:
-        _ruta (str): Ruta del archivo JSON donde se guardaran las entidades.
-        _etiqueta (str): Nombre de la entidad para mensajes (ej. "alumno", "libro", etc.).
+        _ruta (str): Ruta del archivo JSON donde se guardaran los registros.
+        _etiqueta (str): Nombre del registro para mensajes (ej. "alumno", "libro", etc.).
         _esquema (dict): Estructura que define el campo ID y la lista de campos que se pediran.
+    
+    Retorno:
+        None: Se crea el registro, se guarda sobre el archivo JSON y devuelve None. Si el usuario 
+        ingresa '0' para volver o se captura una excepción se informa y devuelve None.
     """
     try:
         diccionario = cargarArchivo(_ruta)
@@ -462,20 +480,26 @@ def crearEntidad(_ruta, _etiqueta, _esquema):
         escribirArchivo(_ruta, diccionario)
 
         print(f"{_etiqueta.capitalize()} {id} registrado correctamente.")
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
-        print(f"Error inesperado al crear entidad: {e}")
+        print(f"Error inesperado al crear registro: {e}")
+        return None
 
-
-def modificarEntidad(_ruta, _etiqueta, _esquema):
+def modificarRegistro(_ruta, _etiqueta, _esquema):
     """
-    Pide un campo y un nuevo valor para modificar una entidad existente en el archivo JSON.
+    Pide un campo y un nuevo valor para modificar un registro existente en el archivo JSON.
 
     Parámetros:
-        _ruta (str): Ruta del archivo JSON donde se guardaran las entidades.
-        _etiqueta (str): Nombre de la entidad para mensajes (ej. "alumno", "libro", etc.).
+        _ruta (str): Ruta del archivo JSON donde se guardaran los registros.
+        _etiqueta (str): Nombre del registro para mensajes (ej. "alumno", "libro", etc.).
         _esquema (dict): Estructura que define el campo ID y la lista de campos disponibles para modificar.
+    
+    Retorno:
+        None: Se modifica el registro, se guarda sobre el archivo JSON y devuelve None. Si el usuario 
+        ingresa '0' para volver o se captura una excepción se informa y devuelve None.
     """
     try:
         diccionario = cargarArchivo(_ruta)
@@ -520,20 +544,26 @@ def modificarEntidad(_ruta, _etiqueta, _esquema):
         escribirArchivo(_ruta, diccionario)
 
         print(f"\n{_etiqueta.capitalize()} {id} modificado correctamente.")
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
-        print(f"Error inesperado al modificar entidad: {e}")
+        print(f"Error inesperado al modificar registro: {e}")
+        return None
 
-
-def inactivarEntidad(_ruta, _etiqueta, _esquema):
+def inactivarRegistro(_ruta, _etiqueta, _esquema):
     """
-    Marca como inactiva una entidad existente guardando su campo "activo" en False.
+    Marca como inactiva un registro existente guardando su campo "activo" en False.
 
     Parámetros:
-        _ruta (str): Ruta del archivo JSON donde se guardaran las entidades.
-        _etiqueta (str): Nombre de la entidad para mensajes (ej. "alumno", "libro", etc.).
-        _esquema (dict): Estructura que define el campo ID de la entidad.
+        _ruta (str): Ruta del archivo JSON donde se guardaran los registros.
+        _etiqueta (str): Nombre del registro para mensajes (ej. "alumno", "libro", etc.).
+        _esquema (dict): Estructura que define el campo ID del registro.
+    
+    Retorno:
+        None: Se inactiva el registro, se guarda sobre el archivo JSON y devuelve None. Si el usuario 
+        ingresa '0' para volver o se captura una excepción se informa y devuelve None.
     """
     try:
         diccionario = cargarArchivo(_ruta)
@@ -550,19 +580,26 @@ def inactivarEntidad(_ruta, _etiqueta, _esquema):
         escribirArchivo(_ruta, diccionario)
 
         print(f"{_etiqueta.capitalize()} {id} inactivado correctamente.")
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
-        print(f"Error inesperado al inactivar entidad: {e}")
+        print(f"Error inesperado al inactivar registro: {e}")
+        return None
 
-def listarEntidades(_ruta, _etiqueta, _esquema):
+def listarRegistros(_ruta, _etiqueta, _esquema):
     """
-    Muestra por consola el listado de las entidades activas según el esquema.
+    Muestra por consola el listado de los registros activos según el esquema.
 
     Parámetros:
-        _ruta (str): Ruta del archivo JSON donde se guardan las entidades.
-        _etiqueta (str): Nombre de la entidad para mensajes (ej. "alumno", "libro", etc.).
+        _ruta (str): Ruta del archivo JSON donde se guardan los registros.
+        _etiqueta (str): Nombre del registro para mensajes (ej. "alumno", "libro", etc.).
         _esquema (dict): Estructura que define la lista de campos a mostrar.
+    
+    Retorno:
+        None: Se lista el registro y devuelve None. Si no se encontraron registros activos 
+        o se captura una excepción se informa y devuelve None.
     """
     try:
         diccionario = cargarArchivo(_ruta)
@@ -575,7 +612,7 @@ def listarEntidades(_ruta, _etiqueta, _esquema):
             print(f"No se encontraron {_etiqueta}s activos.")
             return None
         
-        # Imprime la lista de entidades activas
+        # Imprime la lista de registros activos
         print(f"\nLISTADO DE {_etiqueta.upper()}S ACTIVOS")
         print("-" * 50)
 
@@ -597,52 +634,76 @@ def listarEntidades(_ruta, _etiqueta, _esquema):
                 print(f"{etiqueta.upper()}: {valor}")
 
             print("-" * 50)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
-        print(f"Error inesperado al listar entidad: {e}")
+        print(f"Error inesperado al listar registros: {e}")
+        return None
 
 def ingresarAlumno():
     """
     Registra un nuevo alumno. Permite crear un nuevo registro a partir del esquema correspondiente, 
     guardándolo en su archivo JSON.
+
+    Retorno:
+        None: Se crea el registro y devuelve None. Si se captura una excepción se informa y devuelve None.
     """
     try:
-        crearEntidad(ALUMNOS_ARCHIVO, "alumno", ALUMNO_ESQUEMA)
+        crearRegistro(ALUMNOS_ARCHIVO, "alumno", ALUMNO_ESQUEMA)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al ingresar alumno: {e}")
+        return None
 
 
 def modificarAlumno():
     """
     Modifica los datos de un alumno existente. Permite cambiar uno de los campos de un alumno existente 
     identificado por ID.
+
+    Retorno:
+        None: Se modifica el registro y devuelve None. Si se captura una excepción se informa y devuelve None.
     """
     try:
-        modificarEntidad(ALUMNOS_ARCHIVO, "alumno", ALUMNO_ESQUEMA)
+        modificarRegistro(ALUMNOS_ARCHIVO, "alumno", ALUMNO_ESQUEMA)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al modificar alumno: {e}")
+        return None
 
 
 def inactivarAlumno():
     """
     Marca como inactivo a un alumno existente (baja lógica) identificado por ID.
+
+    Retorno:
+        None: Se inactiva el registro y devuelve None. Si se captura una excepción se informa y devuelve None.
     """
     try:
-        inactivarEntidad(ALUMNOS_ARCHIVO, "alumno", ALUMNO_ESQUEMA)
+        inactivarRegistro(ALUMNOS_ARCHIVO, "alumno", ALUMNO_ESQUEMA)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al inactivar alumno: {e}")
+        return None
 
 
 def listarAlumnos():
     """
     Imprime por consola el listado de alumnos activos y sus datos.
+
+    Retorno:
+        None: Se listan los registros y devuelve None. Si se captura una excepción se informa y devuelve None.
     """
     try:
         esquema = {
@@ -651,54 +712,78 @@ def listarAlumnos():
                 ('infracciones', 'infracciones', 'numero')
             ]
         }
-        listarEntidades(ALUMNOS_ARCHIVO, "alumno", esquema)
+        listarRegistros(ALUMNOS_ARCHIVO, "alumno", esquema)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al listar alumnos: {e}")
+        return None
 
 
 def ingresarLibro():
     """
     Registra un nuevo libro. Permite crear un nuevo registro a partir del esquema correspondiente, 
     guardándolo en su archivo JSON.
+
+    Retorno:
+        None: Se crea el registro y devuelve None. Si se captura una excepción se informa y devuelve None.
     """
     try:
-        crearEntidad(LIBROS_ARCHIVO, "libro", LIBRO_ESQUEMA)
+        crearRegistro(LIBROS_ARCHIVO, "libro", LIBRO_ESQUEMA)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al ingresar libro: {e}")
+        return None
 
 
 def modificarLibro():
     """
     Modifica los datos de un libro existente. Permite cambiar uno de los campos de un libro existente 
     identificado por ID.
+
+    Retorno:
+        None: Se modifica el registro y devuelve None. Si se captura una excepción se informa y devuelve None.
     """
     try:
-        modificarEntidad(LIBROS_ARCHIVO, "libro", LIBRO_ESQUEMA)
+        modificarRegistro(LIBROS_ARCHIVO, "libro", LIBRO_ESQUEMA)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al modificar libro: {e}")
+        return None
 
 
 def inactivarLibro():
     """
     Marca como inactivo a un libro existente (baja lógica) identificado por ID.
+
+    Retorno:
+        None: Se inactiva el registro y devuelve None. Si se captura una excepción se informa y devuelve None.
     """
     try:
-        inactivarEntidad(LIBROS_ARCHIVO, "libro", LIBRO_ESQUEMA)
+        inactivarRegistro(LIBROS_ARCHIVO, "libro", LIBRO_ESQUEMA)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al inactivar libro: {e}")
+        return None
 
 
 def listarLibros():
     """
     Imprime por consola el listado de libros activos y sus datos.
+
+    Retorno:
+        None: Se listan los registros y devuelve None. Si se captura una excepción se informa y devuelve None.
     """
     try:
         base = [
@@ -717,17 +802,24 @@ def listarLibros():
             'campos': base + autores
         }
 
-        listarEntidades(LIBROS_ARCHIVO, "libro", esquema)
+        listarRegistros(LIBROS_ARCHIVO, "libro", esquema)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al listar libros: {e}")
+        return None
 
 
 def registrarPrestamo():
     """
     Registra un nuevo préstamo con ID automático de fecha/hora para alumno y libro válidos y lo 
     agrega al archivo JSON correspondiente.
+
+    Retorno:
+        None: Se crea el registro, se guarda sobre el archivo JSON y devuelve None. Si el usuario 
+        ingresa '0' para volver o se captura una excepción se informa y devuelve None.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -762,16 +854,24 @@ def registrarPrestamo():
         escribirArchivo(PRESTAMOS_ARCHIVO, prestamos)
 
         print(f"Préstamo con ID: {idPrestamo} registrado exitosamente.")
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al registrar préstamo: {e}")
+        return None
 
 
 def finalizarPrestamo():
     """
     Finaliza un préstamo, registra la devolución, calcula el monto y actualiza infracciones. 
     Guarda los datos actualizados en los archivos JSON correspondientes.
+
+    Retorno:
+        None: Se modifican los registros, se guardan sobre los archivos JSON, se informa y 
+        devuelve None. Si el usuario ingresa '0' para volver o se captura una excepción se informa 
+        y devuelve None.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -827,15 +927,23 @@ def finalizarPrestamo():
         print(f"Días prestados: {diasPrestamo}")
         print(f"Costo por día : {costoDiario}")
         print(f"Total a pagar : {montoTotal}\n")
+
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al finalizar préstamo: {e}")
+        return None
 
 
 def imprimirResumenMensual():
     """
     Solicita un año y mes e imprime por consola el listado de préstamos iniciados en ese periodo.
+
+    Retorno:
+        None: Se imprime el resumen y devuelve None. Si se captura una excepción se informa y 
+        devuelve None.
     """
     try:
         alumnos = cargarArchivo(ALUMNOS_ARCHIVO)
@@ -867,15 +975,22 @@ def imprimirResumenMensual():
 
         # Imprime los préstamos formateados
         print("\n".join(salida))
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al imprimir resumen mensual: {e}")
+        return None
 
 
 def imprimirResumenAnualPorLibroCantidad():
     """
     Solicita un año e imprime por consola cuántos préstamos tuvo cada libro mes a mes.
+
+    Retorno:
+        None: Se imprime el resumen y devuelve None. Si se captura una excepción se informa y 
+        devuelve None.
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
@@ -905,15 +1020,22 @@ def imprimirResumenAnualPorLibroCantidad():
         # Formatea el resumen para generar la tabla con cantidades y la imprime
         informe = formatearInformes(resumenPorTitulo, anio, "Resumen Anual de Reservas por Libro (Cantidades)")
         print(informe)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al imprimir resumen anual de reservas por libro: {e}")
+        return None
 
 
 def imprimirResumenAnualPorLibroPesos():
     """
     Solicita un año e imprime por consola el resumen anual del dinero en garantía movido por libro.
+
+    Retorno:
+        None: Se imprime el resumen y devuelve None. Si se captura una excepción se informa y 
+        devuelve None.
     """
     try:
         libros = cargarArchivo(LIBROS_ARCHIVO)
@@ -940,15 +1062,22 @@ def imprimirResumenAnualPorLibroPesos():
         # Formatea el resumen para generar la tabla en pesos y la imprime
         informe = formatearInformes(resumen, anio, "Resumen Anual de Reservas por Libro (Pesos)", _esDinero=True)
         print(informe)
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al imprimir resumen anual por libro: {e}")
+        return None
 
 
 def imprimirResumenAnualDevolucionesIncorrectas():
     """
     Solicita un año e imprime por consola el resumen anual de devoluciones incorrectas por mes.
+
+    Retorno:
+        None: Se imprime el resumen y devuelve None. Si se captura una excepción se informa y 
+        devuelve None.
     """
     try:
         prestamos = cargarArchivo(PRESTAMOS_ARCHIVO)
@@ -1007,10 +1136,13 @@ def imprimirResumenAnualDevolucionesIncorrectas():
 
         # Imprime la tabla
         print("\n".join(salida))
+        return None
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
+        return None
     except Exception as e:
         print(f"Error inesperado al imprimir resumen anual de devoluciones incorrectas: {e}")
+        return None
 
 
 def formatearInformes(_diccionario, _anio, _titulo, _esDinero=False):
@@ -1024,7 +1156,7 @@ def formatearInformes(_diccionario, _anio, _titulo, _esDinero=False):
         _esDinero (bool): Si es True, los valores se muestran con signo '$' y dos decimales.
 
     Retorno:
-        str: Cadena formateada con encabezados, filas alineadas y totales por mes.
+        str: Cadena formateada con encabezados, filas alineadas y totales por mes, o cadena vacía en caso de excepción.
     """
     try:
         _anio = int(_anio)
