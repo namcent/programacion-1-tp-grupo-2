@@ -22,7 +22,28 @@ import re
 ALUMNOS_ARCHIVO = "alumnos.json"
 LIBROS_ARCHIVO = "libros.json"
 PRESTAMOS_ARCHIVO = "prestamos.json"
+ALUMNO_ESQUEMA = {
+    'id': 'id',
+    'campos': [
+        ('nombre', 'nombre', 'string'),
+        ('apellido', 'apellido', 'string'),
+        ('dirección', 'direccion', 'direccion'),
+        ('email', 'email', 'email'),
+        ('celular', 'telefono.celular', 'numero'),
+        ('fijo', 'telefono.fijo', 'numero'),
+    ]
+}
 
+LIBRO_ESQUEMA = {
+    'id': 'id',
+    'campos': [
+        ('título', 'titulo', 'string'),
+        ('autores', 'autores', 'autores'),
+        ('género', 'genero', 'string'),
+        ('editorial', 'editorial', 'string'),
+        ('costo', 'costoGarantia', 'numero'),
+    ]
+}
 
 # ----------------------------------------------------------------------------------------------
 # FUNCIONES
@@ -146,11 +167,9 @@ def sonAutoresValidos(_dato):
         if _dato is None or _dato.strip() == "":
             return False
         patrón = (
-            r'^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
-            r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*'
-            r'(?:\s*,\s*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+'
-            r'(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*)*$'
-        )
+        r'^[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*'
+        r'(?:\s*,\s*[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+(?:\s+[A-Za-zÁÉÍÓÚáéíóúÜüÑñ]+)*){0,2}$'
+    )
         return re.match(patrón, _dato) is not None
     except Exception as e:
         print(f"Error inesperado en la validación de autores: {e}")
@@ -263,31 +282,55 @@ def pedirYValidarId(_diccionario, _tipo, _validarExistente, _validacion):
         str/None: ID validado (en mayúsculas) o None si el usuario ingresa '0' para volver.
     """
     try:
-        id = validarDato(input(f"Ingrese el ID del {_tipo}: "), "id", _validacion).strip().upper()
-            
-        if _validarExistente:
-            while id not in _diccionario or not _diccionario[id]["activo"]:
+        entrada = validarDato(input(f"Ingrese el ID del {_tipo}: "), "id", _validacion).strip().upper()
+        # Chequeo de caso id préstamo con 'fechaFinalizacion' para saber si es un id activo
+        if _validacion == "idPrestamo" and _validarExistente:
+            valido = False
+            while not valido:
+                if entrada == "0":
+                    return None
+                
+                if entrada not in _diccionario:
+                    print("Error: el ID de préstamo no existe.")
+                else:
+                    prestamo = _diccionario[entrada]
+                    if prestamo["fechaFinalizacion"] != "":
+                        print("Error: el préstamo ya fue finalizado.")
+                    else:
+                        # fechaFinalizacion == "" (todavía activo)
+                        valido = True
+
+                if not valido:
+                    entrada = validarDato(
+                        input("Por favor ingrese un ID de préstamo válido (0 para volver): "),
+                        "préstamo",
+                        "idPrestamo"
+                    ).strip().upper()
+            return entrada
+        # Chequeo del resto de las entidades con campo "activo"
+        if _validarExistente and _validacion != "idPrestamo":
+            while entrada not in _diccionario or not _diccionario[entrada]["activo"]:
                 print(f"Error: el ID del {_tipo} no existe o está inactivo.")
                 entrada = input(f"Por favor, ingrese el ID del {_tipo} (0 para volver): ").strip().upper()
                 if entrada == "0":
-                    return
+                    return None
                 else:
-                    id = validarDato(entrada, "id", _validacion).upper()
+                    entrada = validarDato(entrada, "id", _validacion).upper()
 
-            return id
+            return entrada
         else:
-            while id in _diccionario:
+            while entrada in _diccionario:
                 print(f"Error: el ID del {_tipo} que ingresó ya existe.")
                 entrada = input(f"Por favor ingrese un nuevo ID del {_tipo} (0 para volver): ").strip().upper()
                 if entrada == "0":
-                    return
+                    return None
                 else:
-                    id = validarDato(entrada, "id", _validacion).upper()
+                    entrada = validarDato(entrada, "id", _validacion).upper()
 
-            return id
+            return entrada
     except Exception as e:
         print(f"Error inesperado en el pedido y validación de ID: {e}")
-        return ""
+        return None
     
 def obtenerValor(_campo, _tipoDato):
     """
@@ -303,27 +346,30 @@ def obtenerValor(_campo, _tipoDato):
             - Si el tipo de dato es "numero", devuelve un entero.  
             - Para otros tipos, devuelve la cadena validada.
     """
-    if _campo == "autores":
-        autores = validarDato(input("\nIngresar autores (separados por coma, máx 3): ").strip(), "autores", "autores")
-        autoresCortados = [
-            parte.strip() for parte in autores.split(",") if parte.strip()
-        ]
-        autoresRellenados = (autoresCortados + ["", "", ""])[:3]
-        return {
-            "autor1": autoresRellenados[0],
-            "autor2": autoresRellenados[1],
-            "autor3": autoresRellenados[2],
-        }
+    try:
+        if _campo == "autores":
+            autores = validarDato(input("\nIngresar autores (separados por coma, máx 3): ").strip(), "autores", "autores")
+            autoresCortados = [
+                parte.strip() for parte in autores.split(",") if parte.strip()
+            ]
+            autoresRellenados = (autoresCortados + ["", "", ""])[:3]
+            return {
+                "autor1": autoresRellenados[0],
+                "autor2": autoresRellenados[1],
+                "autor3": autoresRellenados[2],
+            }
 
-    if _tipoDato == "numero":
-        mensaje = "Ingresar costo de garantía ($): " if _campo == "costo" else f"Ingresar {_campo}: "
-        entrada = validarDato(input(mensaje), _campo, "numero")
-        return int(entrada)
+        if _tipoDato == "numero":
+            mensaje = "Ingresar costo de garantía ($): " if _campo == "costo" else f"Ingresar {_campo}: "
+            entrada = validarDato(input(mensaje), _campo, "numero")
+            return int(entrada)
 
-    # resto de tipos (string, email, dirección, etc.)
-    mensaje = f"Ingresar {_campo}: "
-    entrada = validarDato(input(mensaje), _campo, _tipoDato)
-    return entrada
+        # resto de tipos (string, email, dirección, etc.)
+        mensaje = f"Ingresar {_campo}: "
+        entrada = validarDato(input(mensaje), _campo, _tipoDato)
+        return entrada
+    except Exception as e:
+        print(f"Error inesperado al obtener valor: {e}")
 
 def asignarValorEnRegistro(_registro, _campo, _valor):
     """
@@ -334,18 +380,21 @@ def asignarValorEnRegistro(_registro, _campo, _valor):
         _campo (str): Ruta del campo, que puede incluir niveles separados por ".".
         _valor: Valor a asignar en el registro.
     """
-    if "." in _campo:
-        partes = _campo.split(".")
-        nodo = _registro
-        for parte in partes[:-1]:
-            try:
-                nodo = nodo[parte]
-            except KeyError:
-                nodo[parte] = {}
-                nodo = nodo[parte]
-        nodo[partes[-1]] = _valor
-    else:
-        _registro[_campo] = _valor
+    try:
+        if "." in _campo:
+            partes = _campo.split(".")
+            nodo = _registro
+            for parte in partes[:-1]:
+                try:
+                    nodo = nodo[parte]
+                except KeyError:
+                    nodo[parte] = {}
+                    nodo = nodo[parte]
+            nodo[partes[-1]] = _valor
+        else:
+            _registro[_campo] = _valor
+    except Exception as e:
+        print(f"Error inesperado al asignar valor al registro: {e}")
 
 def crearEntidad(_ruta, _tipo, _esquema):
     """
@@ -356,36 +405,41 @@ def crearEntidad(_ruta, _tipo, _esquema):
         _tipo (str): Nombre de la entidad para mensajes (ej. "alumno", "libro", etc.).
         _esquema (dict): Estructura que define el campo ID y la lista de campos que se pediran.
     """
-    diccionario = cargarArchivo(_ruta)
+    try:
+        diccionario = cargarArchivo(_ruta)
 
-    idValidador = _esquema['id']
-    id = pedirYValidarId(diccionario, _tipo, False, idValidador) # pedirYValidarId(alumnos, "alumno", True, "id")
-    if id is None:
-        return
+        idValidador = _esquema['id']
+        id = pedirYValidarId(diccionario, _tipo, False, idValidador) # pedirYValidarId(alumnos, "alumno", True, "id")
+        if id is None:
+            return None
 
-    # Preparar el registro con el flag activo
-    registro = {'activo': True}
-    # Construir mapa etiqueta → (campoReal, tipoDato)
-    opciones = {
-        etiqueta: (campoReal, tipoDato)
-        for etiqueta, campoReal, tipoDato in _esquema['campos']
-    }
+        # Preparar el registro con el flag activo
+        registro = {'activo': True}
+        # Construir mapa etiqueta → (campoReal, tipoDato)
+        opciones = {
+            etiqueta: (campoReal, tipoDato)
+            for etiqueta, campoReal, tipoDato in _esquema['campos']
+        }
 
-    # Para cada campo del esquema, pedimos valor y lo asignamos
-    for etiqueta, (campoReal, tipoDato) in opciones.items():
-        valor = obtenerValor(etiqueta, tipoDato)
-        # si el campo real era "costo", obtenerValor ya lo pidió con etiqueta "costo"
-        asignarValorEnRegistro(registro, campoReal, valor)
+        # Para cada campo del esquema, pedimos valor y lo asignamos
+        for etiqueta, (campoReal, tipoDato) in opciones.items():
+            valor = obtenerValor(etiqueta, tipoDato)
+            # si el campo real era "costo", obtenerValor ya lo pidió con etiqueta "costo"
+            asignarValorEnRegistro(registro, campoReal, valor)
 
-    # En caso de alumno, inicializar infracciones a 0
-    if _tipo == "alumno":
-        registro["infracciones"] = 0
+        # En caso de alumno, inicializar infracciones a 0
+        if _tipo == "alumno":
+            registro["infracciones"] = 0
 
-    # Insertar y guardar
-    diccionario[id] = registro
+        # Insertar y guardar
+        diccionario[id] = registro
 
-    escribirArchivo(_ruta, diccionario)
-    print(f"{_tipo.capitalize()} {id} registrado correctamente.")
+        escribirArchivo(_ruta, diccionario)
+        print(f"{_tipo.capitalize()} {id} registrado correctamente.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al crear entidad: {e}")
 
 
 def modificarEntidad(_ruta, _tipo, _esquema):
@@ -397,47 +451,50 @@ def modificarEntidad(_ruta, _tipo, _esquema):
         _tipo (str): Nombre de la entidad para mensajes (ej. "alumno", "libro", etc.).
         _esquema (dict): Estructura que define el campo ID y la lista de campos disponibles para modificar.
     """
-    diccionario = cargarArchivo(_ruta)
+    try:
+        diccionario = cargarArchivo(_ruta)
 
-    idValidador = _esquema['id']
-    id = pedirYValidarId(diccionario, _tipo, True, idValidador) # pedirYValidarId(alumnos, "alumno", True, "id")
-    if id is None:
-        return
+        idValidador = _esquema['id']
+        id = pedirYValidarId(diccionario, _tipo, True, idValidador) # pedirYValidarId(alumnos, "alumno", True, "id")
+        if id is None:
+            return None
 
-    # Construir mapa etiqueta → (campoReal, tipoDato)
-    opciones = {
-        etiqueta: (campoReal, tipoDato)
-        for etiqueta, campoReal, tipoDato in _esquema["campos"]
-    }
+        # Construir mapa etiqueta → (campoReal, tipoDato)
+        opciones = {
+            etiqueta: (campoReal, tipoDato)
+            for etiqueta, campoReal, tipoDato in _esquema["campos"]
+        }
 
-    print(f"opciones: {opciones}")
+        # Mostrar menú de campos
+        print("\nCampos disponibles para modificar:")
+        for etiqueta in opciones:
+            print(f"- {etiqueta}")
 
-    # Mostrar menú de campos
-    print("\nCampos disponibles para modificar:")
-    for etiqueta in opciones:
-        print(f"- {etiqueta}")
-
-    # Leer elección
-    etiquetaSeleccionada = validarDato(
-        input("\nIngresá el campo a modificar: ").strip().lower(),
-        "campo",
-        "string"
-    )
-    while etiquetaSeleccionada not in opciones:
+        # Leer elección
         etiquetaSeleccionada = validarDato(
-            input("Error. Por favor ingrese un campo disponible de la lista: ").strip().lower(),
+            input("\nIngresá el campo a modificar (respetando tildes): ").strip().lower(),
             "campo",
             "string"
         )
+        while etiquetaSeleccionada not in opciones:
+            etiquetaSeleccionada = validarDato(
+                input("Error. Por favor ingrese un campo disponible de la lista: ").strip().lower(),
+                "campo",
+                "string"
+            )
 
-    # Obtener ruta real y tipo, pedir valor y asignar
-    campoReal, tipoDato = opciones[etiquetaSeleccionada]
-    valor = obtenerValor(etiquetaSeleccionada, tipoDato)
+        # Obtener ruta real y tipo, pedir valor y asignar
+        campoReal, tipoDato = opciones[etiquetaSeleccionada]
+        valor = obtenerValor(etiquetaSeleccionada, tipoDato)
 
-    asignarValorEnRegistro(diccionario[id], campoReal, valor)
+        asignarValorEnRegistro(diccionario[id], campoReal, valor)
 
-    escribirArchivo(_ruta, diccionario)
-    print(f"\n{_tipo.capitalize()} {id} modificado correctamente.")
+        escribirArchivo(_ruta, diccionario)
+        print(f"\n{_tipo.capitalize()} {id} modificado correctamente.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al modificar entidad: {e}")
 
 
 def inactivarEntidad(_ruta, _tipo, _esquema):
@@ -449,16 +506,21 @@ def inactivarEntidad(_ruta, _tipo, _esquema):
         _tipo (str): Nombre de la entidad para mensajes (ej. "alumno", "libro", etc.).
         _esquema (dict): Estructura que define el campo ID de la entidad.
     """
-    diccionario = cargarArchivo(_ruta)
+    try:
+        diccionario = cargarArchivo(_ruta)
 
-    idValidador = _esquema['id']
-    id = pedirYValidarId(diccionario, _tipo, True, idValidador) # pedirYValidarId(alumnos, "alumno", True, "id")
-    if id is None:
-            return
+        idValidador = _esquema['id']
+        id = pedirYValidarId(diccionario, _tipo, True, idValidador) # pedirYValidarId(alumnos, "alumno", True, "id")
+        if id is None:
+            return None
 
-    diccionario[id]['activo'] = False
-    escribirArchivo(_ruta, diccionario)
-    print(f"{_tipo.capitalize()} {id} inactivado correctamente.")
+        diccionario[id]['activo'] = False
+        escribirArchivo(_ruta, diccionario)
+        print(f"{_tipo.capitalize()} {id} inactivado correctamente.")
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al inactivar entidad: {e}")
 
 def listarEntidades(_ruta, _tipo, _esquema):
     """
@@ -469,31 +531,36 @@ def listarEntidades(_ruta, _tipo, _esquema):
         _tipo (str): Nombre de la entidad para mensajes (ej. "alumno", "libro", etc.).
         _esquema (dict): Estructura que define la lista de campos a mostrar.
     """
-    diccionario = cargarArchivo(_ruta)
-    
-    activos = {k:v for k,v in diccionario.items() if v['activo']}
+    try:
+        diccionario = cargarArchivo(_ruta)
+        
+        activos = {k:v for k,v in diccionario.items() if v['activo']}
 
-    if not activos:
-        print(f"No se encontraron {_tipo}s activos.")
-        return
-    
-    print(f"\nLISTADO DE {_tipo.upper()}S ACTIVOS")
-    print("-" * 50)
-
-    for id, registro in activos.items():
-        print(f"ID: {id}")
-        for etiqueta, campoReal, tipoDato in _esquema['campos']:
-            if '.' in campoReal:
-                partes = campoReal.split('.')
-                nodo = registro
-                for parte in partes:
-                    nodo = nodo[parte]
-                valor = nodo
-
-            else:
-                valor = registro[campoReal]
-            print(f"{etiqueta.upper()}: {valor}")
+        if not activos:
+            print(f"No se encontraron {_tipo}s activos.")
+            return None
+        
+        print(f"\nLISTADO DE {_tipo.upper()}S ACTIVOS")
         print("-" * 50)
+
+        for id, registro in activos.items():
+            print(f"ID: {id}")
+            for etiqueta, campoReal, tipoDato in _esquema['campos']:
+                if '.' in campoReal:
+                    partes = campoReal.split('.')
+                    nodo = registro
+                    for parte in partes:
+                        nodo = nodo[parte]
+                    valor = nodo
+
+                else:
+                    valor = registro[campoReal]
+                print(f"{etiqueta.upper()}: {valor}")
+            print("-" * 50)
+    except (FileNotFoundError, OSError) as detalle:
+        print("Error al intentar abrir archivo(s):", detalle)
+    except Exception as e:
+        print(f"Error inesperado al listar entidad: {e}")
 
 def ingresarAlumno():
     """
@@ -501,19 +568,7 @@ def ingresarAlumno():
     creación.
     """
     try:
-        esquema = {
-            'id': 'id',
-            'campos': [
-                ('nombre', 'nombre', 'string'),
-                ('apellido', 'apellido', 'string'),
-                ('dirección', 'direccion', 'direccion'),
-                ('email', 'email', 'email'),
-                ('celular', 'telefono.celular', 'numero'),
-                ('fijo', 'telefono.fijo', 'numero')
-            ]
-        }
-        crearEntidad(ALUMNOS_ARCHIVO, "alumno", esquema)
-
+        crearEntidad(ALUMNOS_ARCHIVO, "alumno", ALUMNO_ESQUEMA)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
     except Exception as e:
@@ -526,19 +581,7 @@ def modificarAlumno():
     identificado por ID.
     """
     try:
-        esquema = {
-            'id': 'id',
-            'campos': [
-                ('nombre', 'nombre', 'string'),
-                ('apellido', 'apellido', 'string'),
-                ('dirección', 'direccion', 'direccion'),
-                ('email', 'email', 'email'),
-                ('celular', 'telefono.celular', 'numero'),
-                ('fijo', 'telefono.fijo', 'numero')
-            ]
-        }
-        modificarEntidad(ALUMNOS_ARCHIVO, "alumno", esquema)
-
+        modificarEntidad(ALUMNOS_ARCHIVO, "alumno", ALUMNO_ESQUEMA)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
     except Exception as e:
@@ -550,18 +593,7 @@ def inactivarAlumno():
     Marca como inactivo a un alumno existente (baja lógica) identificado por ID.
     """
     try:
-        esquema = {
-            'id': 'id',
-            'campos': [
-                ('nombre', 'nombre', 'string'),
-                ('apellido', 'apellido', 'string'),
-                ('dirección', 'direccion', 'direccion'),
-                ('email', 'email', 'email'),
-                ('celular', 'telefono.celular', 'numero'),
-                ('fijo', 'telefono.fijo', 'numero')
-            ]
-        }
-        inactivarEntidad(ALUMNOS_ARCHIVO, "alumno", esquema)
+        inactivarEntidad(ALUMNOS_ARCHIVO, "alumno", ALUMNO_ESQUEMA)
 
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
@@ -575,15 +607,9 @@ def listarAlumnos():
     """
     try:
         esquema = {
-            'id': 'id', #idPrestamo
-            'campos': [
-                ('nombre', 'nombre', 'string'),
-                ('apellido', 'apellido', 'string'),
-                ('dirección', 'direccion', 'direccion'),
-                ('email', 'email', 'email'),
-                ('teléfono celular', 'telefono.celular', 'numero'),
-                ('teléfono fijo', 'telefono.fijo', 'numero'),
-                ('infracciones', 'infracciones','numero')
+            'id': ALUMNO_ESQUEMA['id'],
+            'campos': ALUMNO_ESQUEMA['campos'] + [
+                ('infracciones', 'infracciones', 'numero')
             ]
         }
         listarEntidades(ALUMNOS_ARCHIVO, "alumno", esquema)
@@ -599,18 +625,7 @@ def ingresarLibro():
     Registra un nuevo libro. Solicita los datos del nuevo libro, lo registra en el JSON y confirma su creación.
     """
     try:
-        esquema = {
-            'id': 'id', #idPrestamo
-            'campos': [
-                ('título', 'titulo', 'string'),
-                ('autores','autores', 'autores'),
-                ('género', 'genero', 'string'),
-                ('editorial', 'editorial', 'string'),
-                ('costo', 'costoGarantia', 'numero')
-            ]
-        }
-        crearEntidad(LIBROS_ARCHIVO, "libro", esquema)
-
+        crearEntidad(LIBROS_ARCHIVO, "libro", LIBRO_ESQUEMA)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
     except Exception as e:
@@ -623,18 +638,7 @@ def modificarLibro():
     identificado por ID.
     """
     try:
-        esquema = {
-            'id': 'id', #idPrestamo
-            'campos': [
-                ('título', 'titulo', 'string'),
-                ('autores','autores', 'autores'),
-                ('género', 'genero', 'string'),
-                ('editorial', 'editorial', 'string'),
-                ('costo', 'costoGarantia', 'numero')
-            ]
-        }
-        modificarEntidad(LIBROS_ARCHIVO, "libro", esquema)
-
+        modificarEntidad(LIBROS_ARCHIVO, "libro", LIBRO_ESQUEMA)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
     except Exception as e:
@@ -646,18 +650,7 @@ def inactivarLibro():
     Marca como inactivo a un libro existente (baja lógica) identificado por ID.
     """
     try:
-        esquema = {
-            'id': 'id', #idPrestamo
-            'campos': [
-                ('título', 'titulo', 'string'),
-                ('autores','autores', 'autores'),
-                ('género', 'genero', 'string'),
-                ('editorial', 'editorial', 'string'),
-                ('costo', 'costoGarantia', 'numero')
-            ]
-        }
-        inactivarEntidad(LIBROS_ARCHIVO, "libro", esquema)
-
+        inactivarEntidad(LIBROS_ARCHIVO, "libro", LIBRO_ESQUEMA)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
     except Exception as e:
@@ -669,20 +662,23 @@ def listarLibros():
     Imprime por consola el listado de libros activos y sus datos.
     """
     try:
-        esquema = {
-            'id': 'id',
-            'campos': [
-                ('tÍtulo', 'titulo','string'),
-                ('autor 1', 'autores.autor1', 'autores'),
-                ('autor 2', 'autores.autor2', 'autores'),
-                ('autor 3', 'autores.autor3', 'autores'),
-                ('género', 'genero', 'string'),
-                ('editorial', 'editorial', 'string'),
-                ('costo de garantía', 'costoGarantia', 'numero')
-            ]
-        }
-        listarEntidades(LIBROS_ARCHIVO, "libro", esquema)
+        base = [
+            etiqueta for etiqueta in LIBRO_ESQUEMA['campos']
+            if etiqueta[0] != 'autores'
+        ]
 
+        autores = [
+            ('Autor 1', 'autores.autor1', 'string'),
+            ('Autor 2', 'autores.autor2', 'string'),
+            ('Autor 3', 'autores.autor3', 'string'),
+        ]
+
+        esquema = {
+            'id': LIBRO_ESQUEMA['id'],
+            'campos': base + autores
+        }
+
+        listarEntidades(LIBROS_ARCHIVO, "libro", esquema)
     except (FileNotFoundError, OSError) as detalle:
         print("Error al intentar abrir archivo(s):", detalle)
     except Exception as e:
@@ -701,11 +697,11 @@ def registrarPrestamo():
 
         idAlumno = pedirYValidarId(alumnos, "alumno", True, "id")
         if idAlumno is None:
-            return
+            return None
         
         idLibro = pedirYValidarId(libros, "libro", True, "id")
         if idLibro is None:
-            return
+            return None
 
         idPrestamo = datetime.now().strftime("%Y.%m.%d %H:%M:%S")
         fechaInicio = datetime.now()
@@ -739,7 +735,7 @@ def finalizarPrestamo():
 
         idPrestamo = pedirYValidarId(prestamos, "préstamo", True, "idPrestamo")
         if idPrestamo is None:
-            return
+            return None
 
         prestamo = prestamos[idPrestamo]
 
